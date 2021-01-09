@@ -22,12 +22,12 @@ export class MailboxManager extends EventEmitter {
   public readonly options: MailboxManagerOptions;
 
   /**
-   * The collection of tickets.
+   * The collection of tickets per user.
    *
-   * @type {Collection<Snowflake, Ticket>}
+   * @type {Collection<Snowflake, Collection<string, Ticket>>}
    * @memberof MailboxManager
    */
-  public readonly tickets: Collection<Snowflake, Ticket>;
+  public readonly userTickets: Collection<Snowflake, Collection<string, Ticket>>;
 
   /**
    * The client that instantiated this Manager
@@ -62,7 +62,8 @@ export class MailboxManager extends EventEmitter {
 
     this.client = client;
     this.options = options;
-    this.tickets = new Collection();
+    this.userTickets = new Collection();
+    this.canFormatLogs = this.options.loggingOptions && !!this.options.loggingOptions.format;
 
     this.client.on('message', async (message) => handleMessage(this, message));
     if (this.options.forceCloseEmoji) {
@@ -72,22 +73,19 @@ export class MailboxManager extends EventEmitter {
     this.on('ticketClose', async (ticket: Ticket) => handleClosing(this, ticket));
     this.on('ticketLog', async (ticket: Ticket) => handleLog(this, ticket));
 
-    if (this.options.cronTime) {
-      this.job = new CronJob(this.options.cronTime, () => {
-        this.checkTickets();
-      }, null, null, null, this);
-      this.job.start();
-    }
+    this.job = new CronJob(this.options.cronTime, () => this.checkTickets(), null, null, null, this);
+    this.job.start();
 
-    this.canFormatLogs = this.options.loggingOptions && !!this.options.loggingOptions.format;
   }
 
   checkTickets() {
-    this.tickets.each((ticket) => {
-      const isOutdated = Date.now() - ticket.lastMessageAt > this.options.closeTicketAfter * 1000;
-      if (isOutdated) {
-        this.emit('ticketClose', ticket);
-      }
+    this.userTickets.each(userTickets => {
+      userTickets.each(ticket => {
+        const isOutdated = Date.now() - ticket.lastMessageAt > this.options.closeTicketAfter * 1000;
+        if (isOutdated) {
+          this.emit('ticketClose', ticket);
+        }
+      });
     });
   }
 }
@@ -120,3 +118,86 @@ export class MailboxClient extends Client {
     this.mailboxManager = new MailboxManager(this, mailboxOptions);
   }
 }
+
+/**
+ * Emitted when a new ticket is created by a user.
+ * @event MailboxManager#ticketCreate
+ * @param {Ticket} ticket The ticket
+ * @example
+ * manager.on('ticketCreate', (ticket) => {
+ *  console.log(`${ticket.id} has been created`);
+ * });
+ */
+
+/**
+ * Emitted when a ticket is updated. A ticket update is basically a new message sent or received.
+ * @event MailboxManager#ticketUpdate
+ * @param {Ticket} ticket The ticket
+ * @example
+ * manager.on('ticketUpdate', (ticket) => {
+ *  console.log(`${ticket.id} has been updated`);
+ * });
+ */
+
+/**
+ * Emitted when a ticket is logged. Always emitted when the ticket is getting closed.
+ * @event MailboxManager#ticketLog
+ * @param {Ticket} ticket The ticket
+ * @example
+ * manager.on('ticketLog', (ticket) => {
+ *  console.log(`${ticket.id} has been logged`);
+ * });
+ */
+
+/**
+ * Emitted when a ticket is closed.
+ * @event MailboxManager#ticketClose
+ * @param {Ticket} ticket The ticket
+ * @example
+ * manager.on('ticketClose', (ticket) => {
+ *  console.log(`${ticket.id} has been closed`);
+ * });
+ */
+
+/**
+ * Emitted when a ticket is force closed by someone.
+ * @event MailboxManager#ticketForceClose
+ * @param {Ticket} ticket The ticket
+ * @param {Discord.User | Discord.PartialUser} user The user who force closed the ticket
+ * @example
+ * manager.on('ticketForceClose', (ticket, user) => {
+ *  console.log(`${ticket.id} has been force closed by ${user.username}`);
+ * });
+ */
+
+/**
+ * Emitted when a ticket is removed from the collection. Always emitted when a ticket is closed.
+ * @event MailboxManager#ticketDelete
+ * @param {Ticket} ticket The ticket
+ * @example
+ * manager.on('ticketDelete', (ticket) => {
+ *  console.log(`${ticket.id} has been deleted`);
+ * });
+ */
+
+/**
+ * Emitted when a reply is sent from a guild. Always emitted when a ticket is updated.
+ * @event MailboxManager#replySent
+ * @param {Discord.Message} message The message
+ * @param {Discord.Message} answer The answer
+ * @example
+ * manager.on('replySent', (message, answer) => {
+ *  console.log(message.id);
+ *  console.log(answer.id);
+ * });
+ */
+
+/**
+ * Emitted when the original reply message is removed from the channel.
+ * @event MailboxManager#replyDelete
+ * @param {Discord.Message} message The message
+ * @example
+ * manager.on('replyDelete', (message) => {
+ *  console.log(message.id);
+ * });
+ */

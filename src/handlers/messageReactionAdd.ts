@@ -17,7 +17,10 @@ export const handleReaction = async (manager: MailboxManager, messageReaction: M
     messageId = footer.replace('ID: ', '');
   }
 
-  const ticket = manager.tickets.find(t => t.messages.last().id === messageId);
+  const userTicket = manager.userTickets.find(userTickets => userTickets.some(t => t.messages.last().id === messageId));
+  if (!userTicket) return;
+
+  const ticket = userTicket.find(t => t.messages.last().id === messageId);
   if (!ticket) return;
   
   const embed = botMessage.embeds[0];
@@ -26,5 +29,6 @@ export const handleReaction = async (manager: MailboxManager, messageReaction: M
     await botMessage.edit({ content: botMessage.content, embed });
   }
 
+  manager.emit('ticketForceClose', ticket, user);
   return manager.emit('ticketClose', ticket);
 };

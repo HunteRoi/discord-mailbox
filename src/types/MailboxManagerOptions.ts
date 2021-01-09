@@ -11,6 +11,14 @@ import { Moment } from 'moment';
  */
 export interface MailboxManagerOptions {
   /**
+   * The message to return when a user has too much not-closed tickets and is trying to create a new one.
+   *
+   * @type {string}
+   * @memberof MailboxManagerOptions
+   */
+  tooMuchTickets: string;
+
+  /**
    * The message to return when a ticket message contains @everyone or @here
    *
    * @type {string}
@@ -23,6 +31,14 @@ export interface MailboxManagerOptions {
    * @type {string}
    */
   replyMessage: string;
+
+  /**
+   * The maximum of possibly not-closed tickets per user.
+   *
+   * @type {number}
+   * @memberof MailboxManagerOptions
+   */
+  maxOngoingTicketsPerUser: number;
 
   /**
    * The channel in which the tickets' messages are sent.
@@ -58,7 +74,7 @@ export interface MailboxManagerOptions {
    * @type {(string | Date)}
    * @see {cron} https://www.npmjs.com/package/cron
    */
-  cronTime?: string | Date | Moment;
+  cronTime: string | Date | Moment;
 
   /**
    * The emoji added to mails to trigger the force close.

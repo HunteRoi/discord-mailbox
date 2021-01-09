@@ -1,4 +1,11 @@
 # Discord Mailbox
+Discord Mailbox is a framework to easily add a mailbox inside your bot. The feature is also fully customizable.
+
+- Supports multiple tickets per users
+- Logs everything like you want it
+- Emits events like `ticketCreate`, `ticketUpdate` and **6 more**
+- Allow full customization of the embed (you can add image, thumbnail, etc)
+- And much more!
 
 ## Installation
 
@@ -9,19 +16,25 @@ npm install --save @hunteroi/discord-mailbox
 ## Examples
 See [./example/index.js](example/index.js).
 
+![IMAGE](assets/example.gif)
+
 ## Events
 ```ts
-manager.on('ticketCreate', () => {});
+manager.on('ticketCreate', (ticket: Ticket) => {});
 
-manager.on('ticketUpdate', () => {});
+manager.on('ticketUpdate', (ticket: Ticket) => {});
 
-manager.on('ticketClose', () => {});
+manager.on('ticketLog', (ticket: Ticket) => {});
 
-manager.on('ticketDelete', () => {});
+manager.on('ticketClose', (ticket: Ticket) => {});
 
-manager.on('replyDelete', () => {});
+manager.on('ticketForceClose', (ticket: Ticket, user: User | PartialUser) => {});
 
-manager.on('replySent', () => {});
+manager.on('ticketDelete', (ticket: Ticket) => {});
+
+manager.on('replySent', (message: Message, answer: Message) => {});
+
+manager.on('replyDelete', (message: Message) => {});
 ```
 
 ## Contribution

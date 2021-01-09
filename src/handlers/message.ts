@@ -31,7 +31,10 @@ export const handleMessage = async (manager: MailboxManager, message: Message) =
       messageId = footer.replace('ID: ', '');
     }
 
-    ticket = manager.tickets.find(t => t.messages.last().id === messageId);
+    const userTicket = manager.userTickets.find(userTickets => userTickets.some(t => t.messages.last().id === messageId));
+    if (!userTicket) return;
+
+    ticket = userTicket.find(t => t.messages.last().id === messageId);
     if (!ticket) return;
 
     const ticketIsOutdated = (Date.now() - ticket.lastMessageAt) >= (manager.options.closeTicketAfter * 1000);
@@ -61,10 +64,15 @@ export const handleMessage = async (manager: MailboxManager, message: Message) =
       lastMessageAt: message.createdTimestamp,
     };
 
-    if (manager.tickets.has(ticket.createdBy)) {
-      manager.emit('ticketClose', manager.tickets.get(ticket.createdBy));
+    const userTickets = manager.userTickets.get(ticket.createdBy);
+    if (userTickets) {
+      if (userTickets.size === manager.options.maxOngoingTicketsPerUser) {
+        return message.author.send(manager.options.tooMuchTickets);
+      }
+    } else {
+      manager.userTickets.set(ticket.createdBy, new Collection());
     }
-    manager.tickets.set(ticket.createdBy, ticket);
+    manager.userTickets.get(ticket.createdBy).set(ticket.id, ticket);
     manager.emit('ticketCreate', ticket);
   }
 
