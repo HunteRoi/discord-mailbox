@@ -1,3 +1,4 @@
+import { checked } from './../utils/constants';
 import { MailboxManager } from '..';
 import { MessageReaction, PartialUser, User, Snowflake } from 'discord.js';
 
@@ -19,5 +20,11 @@ export const handleReaction = async (manager: MailboxManager, messageReaction: M
   const ticket = manager.tickets.find(t => t.messages.last().id === messageId);
   if (!ticket) return;
   
+  const embed = botMessage.embeds[0];
+  if (embed) {
+    embed.setAuthor(embed.author.name, checked);
+    await botMessage.edit({ content: botMessage.content, embed });
+  }
+
   return manager.emit('ticketClose', ticket);
 };

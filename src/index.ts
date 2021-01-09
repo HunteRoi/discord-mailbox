@@ -2,7 +2,7 @@ import { Client, ClientOptions, Collection, Snowflake } from 'discord.js';
 import { EventEmitter } from 'events';
 import { CronJob } from 'cron';
 
-import { handleMessage, handleReaction, handleClosing } from './handlers';
+import { handleMessage, handleReaction, handleClosing, handleLog} from './handlers';
 import { MailboxManagerOptions, Ticket } from './types';
 
 /**
@@ -46,6 +46,13 @@ export class MailboxManager extends EventEmitter {
   private job?: CronJob;
 
   /**
+   * Whether the logging options is set with a format method or not
+   *
+   * @type {boolean}
+   */
+  canFormatLogs: boolean;
+
+  /**
    *Creates an instance of MailboxManager.
    * @param {Client} client
    * @param {MailboxManagerOptions} [options]
@@ -63,6 +70,7 @@ export class MailboxManager extends EventEmitter {
     }
 
     this.on('ticketClose', async (ticket: Ticket) => handleClosing(this, ticket));
+    this.on('ticketLog', async (ticket: Ticket) => handleLog(this, ticket));
 
     if (this.options.cronTime) {
       this.job = new CronJob(this.options.cronTime, () => {
@@ -70,6 +78,8 @@ export class MailboxManager extends EventEmitter {
       }, null, null, null, this);
       this.job.start();
     }
+
+    this.canFormatLogs = this.options.loggingOptions && !!this.options.loggingOptions.format;
   }
 
   checkTickets() {
