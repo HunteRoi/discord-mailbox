@@ -1,5 +1,5 @@
 {
-  "name": "discord-mailbox",
+  "name": "@hunteroi/discord-mailbox",
   "version": "1.0.0",
   "description": "A framework to integrate a mailbox inside your Discord bot built with DiscordJS",
   "main": "lib/index.js",
