@@ -6,7 +6,6 @@ import { handleMessage, handleReaction, handleClosing, handleLog} from './handle
 import { MailboxManagerOptions, Ticket } from './types';
 
 /**
- *The mailbox manager.
  *
  * @export
  * @class MailboxManager
@@ -50,15 +49,35 @@ export class MailboxManager extends EventEmitter {
    *
    * @type {boolean}
    */
-  canFormatLogs: boolean;
+  public canFormatLogs: boolean;
 
   /**
    *Creates an instance of MailboxManager.
    * @param {Client} client
-   * @param {MailboxManagerOptions} [options]
+   * @param {MailboxManagerOptions} [options={
+   *     tooMuchTickets: 'You have too much opened tickets!',
+   *     notAllowedToPing: 'You are not allowed to mention @everyone and @here.',
+   *     replyMessage: 'Use the "reply" feature to respond.',
+   *     maxOngoingTicketsPerUser: 3,
+   *     closeTicketAfter: 60,
+   *     formatTitle: id => `Ticket ${id}`,
+   *     cronTime: '* * * * *',
+   *     mailboxChannel: null
+   *   }]
    */
-  constructor(client: Client, options: MailboxManagerOptions) {
+  constructor(client: Client, options: MailboxManagerOptions = {
+    tooMuchTickets: 'You have too much opened tickets!',
+    notAllowedToPing: 'You are not allowed to mention @everyone and @here.',
+    replyMessage: 'Use the "reply" feature to respond.',
+    maxOngoingTicketsPerUser: 3,
+    closeTicketAfter: 60,
+    formatTitle: id => `Ticket ${id}`,
+    cronTime: '* * * * *',
+    mailboxChannel: null
+  }) {
     super();
+
+    if (!options.mailboxChannel) throw new Error('Please define the mailbox channel in the options!');
 
     this.client = client;
     this.options = options;
