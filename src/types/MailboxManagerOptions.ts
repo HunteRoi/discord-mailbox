@@ -11,6 +11,13 @@ import { Moment } from 'moment';
  */
 export interface MailboxManagerOptions {
   /**
+   * A method to generate the message to return to the user when their ticket is closed.
+   *
+   * @type {string}
+   */
+  ticketClose: (numberOfTickets: number) => string;
+
+  /**
    * The message to return when a user has too much not-closed tickets and is trying to create a new one.
    *
    * @type {string}

@@ -21,6 +21,7 @@ const manager = new MailboxManager(client, {
   notAllowedToPing: 'You are not allowed to mention @everyone or @here in a mail!',
   replyMessage: 'Please use the "reply" feature to send an answer to this message.',
   tooMuchTickets: 'You have too much tickets that are not closed! Please wait for your tickets to be closed before submitting new ones.',
+  ticketClose: nbTickets => `This ticket has been closed due to inactivity or manually by the receiver. You now have ${nbTickets} tickets left opened.`,
   replyMessageInFooter: true,
   embedOptions: {
     send: true,

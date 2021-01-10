@@ -69,6 +69,7 @@ export class MailboxManager extends EventEmitter {
     tooMuchTickets: 'You have too much opened tickets!',
     notAllowedToPing: 'You are not allowed to mention @everyone and @here.',
     replyMessage: 'Use the "reply" feature to respond.',
+    ticketClose: nbUserTicketsLeft => `This ticket has been closed. You now have ${nbUserTicketsLeft} tickets that are still opened.`,
     maxOngoingTicketsPerUser: 3,
     closeTicketAfter: 60,
     formatTitle: id => `Ticket ${id}`,
