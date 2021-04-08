@@ -10,10 +10,10 @@ const manager = new MailboxManager(client, {
     format: msg => `[${new Date(msg.createdTimestamp)}] ${msg.author.username} | ${msg.cleanContent}`,
     generateMessage: ticket => `Logs for ticket ${ticket.id} - closed at ${new Date(ticket.closedAt)}`,
     sendToRecipient: false,
-    channel: '797604112182149182',
+    channel: 'LOG_CHANNEL_ID',
     showName: false
   },
-  mailboxChannel: '797604112182149182',
+  mailboxChannel: 'MAIL_CHANNEL_ID',
   deleteReplies: true,
   cronTime: '* * * * *', // run each minute
   closeTicketAfter: 60, // in seconds
