@@ -1,18 +1,26 @@
 import { TextChannel } from 'discord.js';
 import { MailboxManager } from '..';
 import { Ticket } from '../types';
-import * as diskette from 'diskette';
+import { WritableStreamBuffer } from 'stream-buffers';
 
 export const handleLog = async (manager: MailboxManager, ticket: Ticket) => {
   if (!manager.options.loggingOptions) return;
 
-  const file = new diskette.File(ticket.logs.join('\n'));
+  const stream = new WritableStreamBuffer({
+    initialSize: 100 * 1024, // start at 100 kilobytes.
+    incrementAmount: 10 * 1024, // grow by 10 kilobytes each time buffer overflows.
+  });
+  for (let log of ticket.logs) {
+    stream.write(`${log}\n`);
+  }
+  const buffer = stream.getContents();
+  
   const logMessage = {
     content: manager.options.loggingOptions.generateMessage(ticket),
     files: [
       {
-        attachment: file.buffer(),
-        name: manager.options.loggingOptions.generateFilename(ticket)
+        attachment: buffer as Buffer,
+        name: manager.options.loggingOptions.generateFilename(ticket),
       },
     ],
   };
