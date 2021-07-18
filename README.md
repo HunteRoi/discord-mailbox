@@ -1,3 +1,5 @@
+<a href="https://www.npmjs.com/package/@hunteroi/discord-mailbox"><img src="https://badge.fury.io/js/%40hunteroi%2Fdiscord-mailbox.svg" alt="npm version" height="18"></a>
+
 # Discord Mailbox
 Discord Mailbox is a framework to easily add a mailbox inside your bot. The feature is also fully customizable.
 
