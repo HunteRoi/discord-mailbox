@@ -3,6 +3,7 @@ import { Moment } from 'moment';
 
 import { EmbedOptions } from './EmbedOptions';
 import { LogsOptions } from './LogsOptions';
+import { ThreadOptions } from './ThreadOptions';
 
 /**
  * The mailbox manager options.
@@ -54,6 +55,14 @@ export interface MailboxManagerOptions {
 	 * @type {Snowflake}
 	 */
 	mailboxChannel: Snowflake;
+
+	/**
+	 * The thread options. If set, threads are used with the {@link mailboxChannel} as parent.
+	 *
+	 * @type {ThreadOptions}
+	 * @memberof MailboxManagerOptions
+	 */
+	threadOptions?: ThreadOptions;
 
 	/**
 	 * Whether the replies in the mailbox channel should get deleted or not.

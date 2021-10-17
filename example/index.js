@@ -21,14 +21,16 @@ const manager = new MailboxManager(client, {
 				msg.cleanContent
 			}`,
 		generateMessage: (ticket) =>
-			`Logs for ticket ${ticket.id} - closed at ${new Date(
-				ticket.closedAt
-			)}`,
+			`Logs for ticket ${ticket.id} - closed at ${new Date(ticket.closedAt)}`,
 		sendToRecipient: false,
 		channel: 'TEXT_CHANNEL_ID',
 		showName: false,
 	},
 	mailboxChannel: 'TEXT_CHANNEL_ID',
+	threadOptions: {
+		name: (ticket) => `Ticket ${ticket.id}`,
+		startMessage: (ticket) => `New ticket created for <@${ticket.createdBy}>`,
+	},
 	deleteReplies: true,
 	cronTime: '* * * * *', // run each minute
 	closeTicketAfter: 60, // in seconds
