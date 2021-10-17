@@ -82,8 +82,3 @@ Contributions are what make the open source community such an amazing place to b
 3. Commit your Changes: `git commit -m 'Add some amazing work'`
 4. Push to the Branch: `git push origin patch/YourAmazingWork`
 5. Open a Pull Request
-
-## Todo
-
-- auto reply when a ticket is opened
-- support thread
