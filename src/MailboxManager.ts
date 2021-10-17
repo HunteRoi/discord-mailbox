@@ -7,6 +7,7 @@ import {
 	handleReaction,
 	handleClosing,
 	handleLog,
+	handleOpening,
 } from './handlers';
 import { MailboxManagerOptions, Ticket } from './types';
 import { MailboxManagerEvents } from '.';
@@ -70,8 +71,7 @@ export class MailboxManager extends EventEmitter {
 		client: Client,
 		options: MailboxManagerOptions = {
 			tooMuchTickets: 'You have too much opened tickets!',
-			notAllowedToPing:
-				'You are not allowed to mention @everyone and @here.',
+			notAllowedToPing: 'You are not allowed to mention @everyone and @here.',
 			replyMessage: 'Use the "reply" feature to respond.',
 			ticketClose: (nbUserTicketsLeft) =>
 				`This ticket has been closed. You now have ${nbUserTicketsLeft} tickets that are still opened.`,
@@ -80,6 +80,7 @@ export class MailboxManager extends EventEmitter {
 			formatTitle: (id) => `Ticket ${id}`,
 			cronTime: '* * * * *',
 			mailboxChannel: null,
+			threadOptions: null,
 		}
 	) {
 		super();
@@ -89,9 +90,7 @@ export class MailboxManager extends EventEmitter {
 			throw new Error('GUILDS intent is required to use this package!');
 		}
 		if (!intents.has(Intents.FLAGS.GUILD_MESSAGES)) {
-			throw new Error(
-				'GUILD_MESSAGES intent is required to use this package!'
-			);
+			throw new Error('GUILD_MESSAGES intent is required to use this package!');
 		}
 		if (!intents.has(Intents.FLAGS.DIRECT_MESSAGES)) {
 			throw new Error(
@@ -116,9 +115,7 @@ export class MailboxManager extends EventEmitter {
 		}
 
 		if (!options.mailboxChannel) {
-			throw new Error(
-				'Please define the mailbox channel in the options!'
-			);
+			throw new Error('Please define the mailbox channel in the options!');
 		}
 
 		this.client = client;
@@ -131,14 +128,14 @@ export class MailboxManager extends EventEmitter {
 			handleMessage(this, message);
 		});
 		if (this.options.forceCloseEmoji) {
-			this.client.on(
-				'messageReactionAdd',
-				async (messageReaction, user) => {
-					await handleReaction(this, messageReaction, user);
-				}
-			);
+			this.client.on('messageReactionAdd', async (messageReaction, user) => {
+				await handleReaction(this, messageReaction, user);
+			});
 		}
 
+		this.on(MailboxManagerEvents.ticketCreate, async (ticket: Ticket) =>
+			handleOpening(this, ticket)
+		);
 		this.on(MailboxManagerEvents.ticketClose, async (ticket: Ticket) =>
 			handleClosing(this, ticket)
 		);
@@ -248,5 +245,29 @@ export class MailboxManager extends EventEmitter {
  * @example
  * manager.on(MailboxManagerEvents.replyDelete, (message) => {
  *  console.log(message.id);
+ * });
+ */
+
+/**
+ * Emitted when the thread channel is created (due to the ticket being created).
+ * @event MailboxManager#threadCreate
+ * @param {Ticket} ticket The ticket
+ * @param {Discord.ThreadChannel} thread The thread channel
+ * @example
+ * manager.on(MailboxManagerEvents.threadCreate, (ticket, thread) => {
+ * console.log(ticket.id) ;
+ * console.log(thread.id);
+ * });
+ */
+
+/**
+ * Emitted when the thread channel is archived (due to the ticket being closed).
+ * @event MailboxManager#threadArchive
+ * @param {Ticket} ticket The ticket
+ * @param {Discord.ThreadChannel} thread The thread channel
+ * @example
+ * manager.on(MailboxManagerEvents.threadArchive, (ticket, thread) => {
+ * console.log(ticket.id) ;
+ * console.log(thread.id);
  * });
  */

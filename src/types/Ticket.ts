@@ -83,6 +83,14 @@ export class Ticket {
 	 * @memberof Ticket
 	 */
 	closeAfter: number;
+
+	/**
+	 * The thread channel id in which the ticket is managed on the guild side. If not set, the manager's mailbox is used instead.
+	 *
+	 * @type {Snowflake | null}
+	 * @memberof Ticket
+	 */
+	threadId?: Snowflake | null;
 	//#endregion
 
 	/**
@@ -114,6 +122,16 @@ export class Ticket {
 		this.createdBy = parameters.firstMessage.author.id;
 
 		this.addMessage(parameters.firstMessage, parameters.shouldFormatLog);
+	}
+
+	/**
+	 * Sets the thread channel id.
+	 *
+	 * @param {Snowflake} threadId
+	 * @memberof Ticket
+	 */
+	setThreadId(threadId: Snowflake) {
+		this.threadId = threadId;
 	}
 
 	/**

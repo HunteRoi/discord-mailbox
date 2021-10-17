@@ -4,11 +4,11 @@
 
 Discord Mailbox is a framework to easily add a mailbox inside your bot. The feature is also fully customizable.
 
--   Supports multiple tickets per users
--   Logs everything like you want it
--   Emits events like `ticketCreate`, `ticketUpdate` and **6 more**
--   Allow full customization of the embed (you can add image, thumbnail, etc)
--   And much more!
+- Supports multiple tickets per users
+- Logs everything like you want it
+- Emits events like `ticketCreate`, `ticketUpdate` and **8 more**
+- Allow full customization of the embed (you can add image, thumbnail, etc)
+- And much more!
 
 ![IMAGE](./assets/example.gif)
 
@@ -20,12 +20,12 @@ You also must not forget to include [mandatory intents and partials](#mandatory-
 
 ### Mandatory intents and partials
 
--   GUILDS: used to access guild content such as channels.
--   GUILD_MESSAGES: used to read guild messages.
--   GUILD_MESSAGE_REACTIONS: used to access guild messages reactions.
--   DIRECT_MESSAGES: used to access direct messages to the bot.
--   CHANNEL: used to receive events when the bot is DMed.
--   MESSAGE: used to read the messages even if incomplete.
+- GUILDS: used to access guild content such as channels.
+- GUILD_MESSAGES: used to read guild messages.
+- GUILD_MESSAGE_REACTIONS: used to access guild messages reactions.
+- DIRECT_MESSAGES: used to access direct messages to the bot.
+- CHANNEL: used to receive events when the bot is DMed.
+- MESSAGE: used to read the messages even if incomplete.
 
 ## Installation
 
@@ -61,6 +61,16 @@ manager.on(
 );
 
 manager.on(MailboxManagerEvents.replyDelete, (message: Message) => {});
+
+manager.on(
+	MailboxManagerEvents.threadCreate,
+	(ticket: Ticket, thread: ThreadChannel) => {}
+);
+
+manager.on(
+	MailboxManagerEvents.threadArchive,
+	(ticket: Ticket, thread: ThreadChannel) => {}
+);
 ```
 
 ## Contribution
@@ -72,8 +82,3 @@ Contributions are what make the open source community such an amazing place to b
 3. Commit your Changes: `git commit -m 'Add some amazing work'`
 4. Push to the Branch: `git push origin patch/YourAmazingWork`
 5. Open a Pull Request
-
-## Todo
-
--   auto reply when a ticket is opened
--   support thread

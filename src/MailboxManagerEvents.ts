@@ -12,6 +12,9 @@ export enum MailboxManagerEvents {
 	ticketForceClose = 'ticketForceClose',
 	ticketDelete = 'ticketDelete',
 
+	threadCreate = 'threadCreate',
+	threadArchive = 'threadArchive',
+
 	replySent = 'replySent',
 	replyDelete = 'replyDelete',
 

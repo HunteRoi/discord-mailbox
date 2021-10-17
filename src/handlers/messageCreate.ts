@@ -6,6 +6,8 @@ import {
 	Constants,
 	MessageEmbed,
 	PartialMessage,
+	ThreadChannel,
+	AllowedThreadTypeForTextChannel,
 } from 'discord.js';
 
 import { Ticket } from '../types';
@@ -29,34 +31,45 @@ export const handleMessage = async (
 	}
 
 	const isFromDM =
-		message.channel.type ===
-		Constants.ChannelTypes[Constants.ChannelTypes.DM];
+		message.channel.type === Constants.ChannelTypes[Constants.ChannelTypes.DM];
 	let userTickets: Collection<string, Ticket>;
 	let ticket: Ticket;
-	let botMessage: Message;
+	let previousMessage: Message;
 	let answer: Message;
 
-	const isExistingTicket = !!message.reference;
+	const mainChannel = await message.client.channels.fetch(
+		manager.options.mailboxChannel
+	);
+	if (!mainChannel) return;
+	const mailboxChannel: TextChannel = mainChannel as TextChannel;
+	let threadChannel: ThreadChannel | null = null;
+
+	const isExistingTicket = Boolean(message.reference);
 	if (isExistingTicket) {
 		let messageId: Snowflake;
 
-		botMessage = await message.channel.messages.fetch(
+		previousMessage = await message.channel.messages.fetch(
 			message.reference.messageId
 		);
 
 		messageId = extractMessageId(
-			botMessage,
+			previousMessage,
 			!!manager.options.embedOptions
 		);
 		if (!messageId) return;
 
 		userTickets = manager.userTickets.find((userTickets) =>
-			userTickets.some((t) => t.messages.last().id === messageId)
+			userTickets.some((t: Ticket) => t.messages.last().id === messageId)
 		);
 		if (!userTickets || userTickets.size === 0) return;
 
-		ticket = userTickets.find((t) => t.messages.last().id === messageId);
+		ticket = userTickets.find(
+			(t: Ticket) => t.messages.last().id === messageId
+		);
 		if (!ticket) return;
+		if (ticket.threadId) {
+			threadChannel = await mailboxChannel.threads.fetch(ticket.threadId);
+		}
 
 		if (isFromDM && ticket.isOutdated()) {
 			return manager.emit(MailboxManagerEvents.ticketClose, ticket);
@@ -87,15 +100,28 @@ export const handleMessage = async (
 			manager.userTickets.get(ticket.createdBy).set(ticket.id, ticket);
 			manager.emit(MailboxManagerEvents.ticketCreate, ticket);
 		}
+
+		if (manager.options.threadOptions) {
+			const startMessage = await mailboxChannel.send(
+				manager.options.threadOptions.startMessage(ticket)
+			);
+			threadChannel = await mailboxChannel.threads.create({
+				name: manager.options.threadOptions.name(ticket),
+				autoArchiveDuration: 'MAX',
+				startMessage,
+				type: Constants.ChannelTypes[
+					Constants.ChannelTypes.GUILD_PUBLIC_THREAD
+				] as AllowedThreadTypeForTextChannel,
+			});
+			ticket.setThreadId(threadChannel.id);
+			manager.emit(MailboxManagerEvents.threadCreate, ticket, threadChannel);
+		}
 	}
 
 	const ticketMessage = ticket.generateMessage(manager, message);
 	switch (message.channel.type) {
 		case Constants.ChannelTypes[Constants.ChannelTypes.DM]: {
-			const mailboxChannel = await message.client.channels.fetch(
-				manager.options.mailboxChannel
-			);
-			answer = await (mailboxChannel as TextChannel).send(
+			answer = await (threadChannel ?? mailboxChannel).send(
 				ticketMessage instanceof MessageEmbed
 					? { embeds: [ticketMessage] }
 					: ticketMessage
@@ -107,20 +133,22 @@ export const handleMessage = async (
 			return;
 		}
 
-		case Constants.ChannelTypes[Constants.ChannelTypes.GUILD_TEXT]: {
-			if (botMessage) {
-				const embed = botMessage.embeds[0];
+		case Constants.ChannelTypes[Constants.ChannelTypes.GUILD_TEXT]:
+		case Constants.ChannelTypes[Constants.ChannelTypes.GUILD_PRIVATE_THREAD]:
+		case Constants.ChannelTypes[Constants.ChannelTypes.GUILD_PUBLIC_THREAD]: {
+			if (previousMessage) {
+				const embed = previousMessage.embeds[0];
 				if (embed) {
 					embed.setAuthor(embed.author.name, arrowUp);
-					await botMessage.edit({
-						content: botMessage.content || null,
+					await previousMessage.edit({
+						content: previousMessage.content || null,
 						embeds: [embed],
 					});
 				}
 
 				if (manager.options.replySentEmoji) {
-					await botMessage.reactions.removeAll();
-					await botMessage.react(manager.options.replySentEmoji);
+					await previousMessage.reactions.removeAll();
+					await previousMessage.react(manager.options.replySentEmoji);
 				}
 			}
 
@@ -136,11 +164,7 @@ export const handleMessage = async (
 						? { embeds: [ticketMessage] }
 						: ticketMessage
 				);
-			return manager.emit(
-				MailboxManagerEvents.replySent,
-				message,
-				answer
-			);
+			return manager.emit(MailboxManagerEvents.replySent, message, answer);
 		}
 
 		default:
