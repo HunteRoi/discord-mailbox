@@ -11,11 +11,15 @@ export const handleClosing = async (
 
 	const userTickets = manager.userTickets.get(ticket.createdBy);
 	if (userTickets) {
-		if (ticket.threadId) {
-			const channel = await manager.client.channels.fetch(ticket.threadId);
+		const channel = ticket.threadId
+			? await manager.client.channels.fetch(ticket.threadId)
+			: null;
+		if (channel) {
 			const threadChannel = channel as ThreadChannel;
-			threadChannel.setArchived(true);
-			manager.emit(MailboxManagerEvents.threadArchive, ticket, threadChannel);
+			if (threadChannel) {
+				threadChannel.setArchived(true);
+				manager.emit(MailboxManagerEvents.threadArchive, ticket, threadChannel);
+			}
 		}
 
 		userTickets.delete(ticket.id);
