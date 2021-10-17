@@ -6,7 +6,7 @@ Discord Mailbox is a framework to easily add a mailbox inside your bot. The feat
 
 - Supports multiple tickets per users
 - Logs everything like you want it
-- Emits events like `ticketCreate`, `ticketUpdate` and **6 more**
+- Emits events like `ticketCreate`, `ticketUpdate` and **8 more**
 - Allow full customization of the embed (you can add image, thumbnail, etc)
 - And much more!
 
