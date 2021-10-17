@@ -10,6 +10,23 @@ Discord Mailbox is a framework to easily add a mailbox inside your bot. The feat
 -   Allow full customization of the embed (you can add image, thumbnail, etc)
 -   And much more!
 
+![IMAGE](./assets/example.gif)
+
+## Prerequisites ⚠️
+
+Starting at **v2.0.0**, you must use **NodeJS v16.6.0 or higher** to run a bot with this library.
+
+You also must not forget to include [mandatory intents and partials](#mandatory-intents-and-partials) as well as give your bot the rights to read messages.
+
+### Mandatory intents and partials
+
+-   GUILDS: used to access guild content such as channels.
+-   GUILD_MESSAGES: used to read guild messages.
+-   GUILD_MESSAGE_REACTIONS: used to access guild messages reactions.
+-   DIRECT_MESSAGES: used to access direct messages to the bot.
+-   CHANNEL: used to receive events when the bot is DMed.
+-   MESSAGE: used to read the messages even if incomplete.
+
 ## Installation
 
 ```sh
@@ -19,8 +36,6 @@ npm install --save @hunteroi/discord-mailbox
 ## Examples
 
 See [./example/index.js](example/index.js).
-
-![IMAGE](assets/example.gif)
 
 ## Events
 
@@ -61,4 +76,4 @@ Contributions are what make the open source community such an amazing place to b
 ## Todo
 
 -   auto reply when a ticket is opened
--   warn when a ticket is closed/force closed
+-   support thread
