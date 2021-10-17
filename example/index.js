@@ -1,4 +1,4 @@
-const { Client, Intents } = require('discord.js');
+const { Client, Intents, Constants } = require('discord.js');
 
 const { MailboxManager, MailboxManagerEvents } = require('../lib');
 
@@ -7,9 +7,9 @@ const client = new Client({
 		Intents.FLAGS.GUILDS,
 		Intents.FLAGS.GUILD_MESSAGES,
 		Intents.FLAGS.GUILD_MESSAGE_REACTIONS,
-		Intents.FLAGS.GUILD_MEMBERS,
 		Intents.FLAGS.DIRECT_MESSAGES,
 	],
+	partials: [Constants.PartialTypes.CHANNEL, Constants.PartialTypes.MESSAGE],
 });
 const manager = new MailboxManager(client, {
 	forceCloseEmoji: '❌',
@@ -52,7 +52,6 @@ const manager = new MailboxManager(client, {
 client.on('ready', () => console.log('Connected!'));
 
 client.on('messageCreate', (message) => {
-	console.log(message);
 	if (message.content === 'show me the tickets collection') {
 		message.reply(
 			`\`\`\`js\n${JSON.stringify(manager.userTickets, null, 2)}\n\`\`\``

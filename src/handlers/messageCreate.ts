@@ -5,6 +5,7 @@ import {
 	TextChannel,
 	Constants,
 	MessageEmbed,
+	PartialMessage,
 } from 'discord.js';
 
 import { Ticket } from '../types';
@@ -14,17 +15,18 @@ import { arrowUp } from '../utils/constants';
 
 export const handleMessage = async (
 	manager: MailboxManager,
-	message: Message
+	msg: Message | PartialMessage
 ) => {
-	console.log(message);
+	let message: Message;
+	if (msg.partial) {
+		message = await message.fetch(true);
+	} else message = msg as Message;
 
 	if (message.author.bot) return;
 
 	if (message.mentions.everyone) {
 		return message.author.send(manager.options.notAllowedToPing);
 	}
-
-	console.log('2', message);
 
 	const isFromDM =
 		message.channel.type ===
@@ -63,10 +65,14 @@ export const handleMessage = async (
 		ticket.addMessage(message, manager.canFormatLogs);
 		manager.emit(MailboxManagerEvents.ticketUpdate, ticket);
 	} else {
-		console.log('new message');
 		if (!isFromDM) return;
 
-		ticket = new Ticket(message, manager.options.loggingOptions.format);
+		ticket = new Ticket({
+			firstMessage: message,
+			formatLogs: manager.options.loggingOptions.format,
+			closeAfter: manager.options.closeTicketAfter,
+			shouldFormatLog: true,
+		});
 		userTickets = manager.userTickets.get(ticket.createdBy);
 
 		if (
@@ -107,12 +113,13 @@ export const handleMessage = async (
 				if (embed) {
 					embed.setAuthor(embed.author.name, arrowUp);
 					await botMessage.edit({
-						content: botMessage.content,
+						content: botMessage.content || null,
 						embeds: [embed],
 					});
 				}
 
 				if (manager.options.replySentEmoji) {
+					await botMessage.reactions.removeAll();
 					await botMessage.react(manager.options.replySentEmoji);
 				}
 			}

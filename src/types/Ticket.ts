@@ -10,6 +10,7 @@ import * as uuid from 'uuid';
 import { MailboxManager } from '..';
 import { isNullOrWhiteSpaces } from '../utils/StringUtils';
 import { arrowDown } from '../utils/constants';
+import { TicketNamedParameter } from './TicketNamedParameter';
 
 /**
  *
@@ -86,24 +87,33 @@ export class Ticket {
 
 	/**
 	 * Creates an instance of Ticket.
-	 * @param {Message} firstMessage
-	 * @param {(message: Message) => string} [formatLogs=null]
+	 * @param {TicketNamedParameter} [parameters={
+	 * 			formatLogs: null,
+	 * 			closeAfter: 60,
+	 * 			shouldFormatLog: false,
+	 * 		}]
 	 * @memberof Ticket
 	 */
 	constructor(
-		firstMessage: Message,
-		formatLogs: (message: Message) => string = null,
-		closeAfter: number = 60
+		parameters: TicketNamedParameter = {
+			firstMessage: null,
+			formatLogs: null,
+			closeAfter: 60,
+			shouldFormatLog: false,
+		}
 	) {
+		if (!parameters.firstMessage)
+			throw new Error('A first message is mandatory!');
+
 		this.id = uuid.v4();
 		this.messages = new Collection<Snowflake, Message>();
 		this.logs = [];
-		this.formatLogs = formatLogs;
-		this.closeAfter = closeAfter;
-		this.createdAt = firstMessage.createdTimestamp;
-		this.createdBy = firstMessage.author.id;
+		this.formatLogs = parameters.formatLogs;
+		this.closeAfter = parameters.closeAfter;
+		this.createdAt = parameters.firstMessage.createdTimestamp;
+		this.createdBy = parameters.firstMessage.author.id;
 
-		this.addMessage(firstMessage);
+		this.addMessage(parameters.firstMessage, parameters.shouldFormatLog);
 	}
 
 	/**
@@ -169,8 +179,8 @@ export class Ticket {
 				? this.generateDescription(
 						messageOrText,
 						isSentToAdmin || manager.options.loggingOptions.showName
-							? null
-							: `${messageOrText.member.user.username}:\n`,
+							? `${messageOrText.author.username}:\n`
+							: null,
 						`\n\n**${manager.options.replyMessage}**`
 				  )
 				: this.generateDescription(messageOrText);

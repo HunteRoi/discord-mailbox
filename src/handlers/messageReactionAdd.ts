@@ -42,7 +42,10 @@ export const handleReaction = async (
 	const embed = botMessage.embeds && botMessage.embeds[0];
 	if (embed) {
 		embed.setAuthor(embed.author.name, checked);
-		await botMessage.edit({ content: botMessage.content, embeds: [embed] });
+		await botMessage.edit({
+			content: botMessage.content || null,
+			embeds: [embed],
+		});
 	}
 
 	manager.emit(MailboxManagerEvents.ticketForceClose, ticket, user);

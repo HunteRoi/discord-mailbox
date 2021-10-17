@@ -1,4 +1,4 @@
-import { Client, Collection, Intents, Snowflake } from 'discord.js';
+import { Client, Collection, Intents, Snowflake, Constants } from 'discord.js';
 import { EventEmitter } from 'events';
 import { CronJob } from 'cron';
 
@@ -93,6 +93,11 @@ export class MailboxManager extends EventEmitter {
 				'GUILD_MESSAGES intent is required to use this package!'
 			);
 		}
+		if (!intents.has(Intents.FLAGS.DIRECT_MESSAGES)) {
+			throw new Error(
+				'DIRECT_MESSAGES intent is required to use this package!'
+			);
+		}
 		if (
 			options.forceCloseEmoji &&
 			!intents.has(Intents.FLAGS.GUILD_MESSAGE_REACTIONS)
@@ -101,10 +106,13 @@ export class MailboxManager extends EventEmitter {
 				'GUILD_MESSAGE_REACTIONS intent is required to use this package!'
 			);
 		}
-		if (!intents.has(Intents.FLAGS.DIRECT_MESSAGES)) {
-			throw new Error(
-				'DIRECT_MESSAGES intent is required to use this package!'
-			);
+
+		const partials = client.options.partials;
+		if (!partials.includes(Constants.PartialTypes.CHANNEL)) {
+			throw new Error('CHANNEL partial is required to use this package!');
+		}
+		if (!partials.includes(Constants.PartialTypes.MESSAGE)) {
+			throw new Error('MESSAGE partial is required to use this package!');
 		}
 
 		if (!options.mailboxChannel) {
