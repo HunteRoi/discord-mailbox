@@ -1,34 +1,53 @@
+import {
+	MessageReaction,
+	PartialUser,
+	User,
+	Snowflake,
+	PartialMessageReaction,
+	PartialMessage,
+	Collection,
+	Message,
+} from 'discord.js';
+
+import { extractMessageId } from '../utils/MessageUtils';
+import { Ticket } from '../types';
 import { checked } from './../utils/constants';
-import { MailboxManager } from '..';
-import { MessageReaction, PartialUser, User, Snowflake } from 'discord.js';
+import { MailboxManager, MailboxManagerEvents } from '..';
 
-export const handleReaction = async (manager: MailboxManager, messageReaction: MessageReaction, user: User | PartialUser) => {
-  if (user.bot) return;
-  if (messageReaction.emoji.name !== manager.options.forceCloseEmoji) return;
+export const handleReaction = async (
+	manager: MailboxManager,
+	messageReaction: MessageReaction | PartialMessageReaction,
+	user: User | PartialUser
+) => {
+	let botMessage: Message | PartialMessage;
+	let messageId: Snowflake;
+	let userTickets: Collection<string, Ticket>;
+	let ticket: Ticket;
 
-  const botMessage = messageReaction.message;
+	if (user.bot) return;
+	if (messageReaction.emoji.name !== manager.options.forceCloseEmoji) return;
 
-  let messageId: Snowflake;
-  if (manager.options.embedOptions) {
-    messageId = botMessage.embeds[0].footer.text.replace('ID: ', '');
-  } else {
-    const array = botMessage.content.split('\n\n​');
-    const footer = array[array.length - 1];
-    messageId = footer.replace('ID: ', '');
-  }
+	botMessage = messageReaction.message;
+	messageId = extractMessageId(botMessage, !!manager.options.embedOptions);
+	if (!messageId) return;
 
-  const userTicket = manager.userTickets.find(userTickets => userTickets.some(t => t.messages.last().id === messageId));
-  if (!userTicket) return;
+	userTickets = manager.userTickets.find((userTickets) =>
+		userTickets.some((t) => t.messages.last().id === messageId)
+	);
+	if (!userTickets) return;
 
-  const ticket = userTicket.find(t => t.messages.last().id === messageId);
-  if (!ticket) return;
-  
-  const embed = botMessage.embeds[0];
-  if (embed) {
-    embed.setAuthor(embed.author.name, checked);
-    await botMessage.edit({ content: botMessage.content, embed });
-  }
+	ticket = userTickets.find((t) => t.messages.last().id === messageId);
+	if (!ticket) return;
 
-  manager.emit('ticketForceClose', ticket, user);
-  return manager.emit('ticketClose', ticket);
+	const embed = botMessage.embeds && botMessage.embeds[0];
+	if (embed) {
+		embed.setAuthor(embed.author.name, checked);
+		await botMessage.edit({
+			content: botMessage.content || null,
+			embeds: [embed],
+		});
+	}
+
+	manager.emit(MailboxManagerEvents.ticketForceClose, ticket, user);
+	return manager.emit(MailboxManagerEvents.ticketClose, ticket);
 };
