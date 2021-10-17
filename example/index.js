@@ -39,6 +39,8 @@ const manager = new MailboxManager(client, {
 		'You are not allowed to mention @everyone or @here in a mail!',
 	replyMessage:
 		'Please use the "reply" feature to send an answer to this message.',
+	autoReplyMessage:
+		'Your ticket has been received and will be treated soon. Please remain patient as we get back to you!',
 	tooMuchTickets:
 		'You have too much tickets that are not closed! Please wait for your tickets to be closed before submitting new ones.',
 	ticketClose: (nbTickets) =>

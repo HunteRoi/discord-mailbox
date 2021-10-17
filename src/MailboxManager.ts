@@ -7,6 +7,7 @@ import {
 	handleReaction,
 	handleClosing,
 	handleLog,
+	handleOpening,
 } from './handlers';
 import { MailboxManagerOptions, Ticket } from './types';
 import { MailboxManagerEvents } from '.';
@@ -132,6 +133,9 @@ export class MailboxManager extends EventEmitter {
 			});
 		}
 
+		this.on(MailboxManagerEvents.ticketCreate, async (ticket: Ticket) =>
+			handleOpening(this, ticket)
+		);
 		this.on(MailboxManagerEvents.ticketClose, async (ticket: Ticket) =>
 			handleClosing(this, ticket)
 		);

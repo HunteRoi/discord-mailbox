@@ -23,7 +23,6 @@ export interface MailboxManagerOptions {
 	 * The message to return when a user has too much not-closed tickets and is trying to create a new one.
 	 *
 	 * @type {string}
-	 * @memberof MailboxManagerOptions
 	 */
 	tooMuchTickets: string;
 
@@ -42,10 +41,16 @@ export interface MailboxManagerOptions {
 	replyMessage: string;
 
 	/**
+	 * The text message sent to the user opening a new ticket.
+	 *
+	 * @type {string}
+	 */
+	autoReplyMessage?: string;
+
+	/**
 	 * The maximum of possibly not-closed tickets per user.
 	 *
 	 * @type {number}
-	 * @memberof MailboxManagerOptions
 	 */
 	maxOngoingTicketsPerUser: number;
 
@@ -60,7 +65,6 @@ export interface MailboxManagerOptions {
 	 * The thread options. If set, threads are used with the {@link mailboxChannel} as parent.
 	 *
 	 * @type {ThreadOptions}
-	 * @memberof MailboxManagerOptions
 	 */
 	threadOptions?: ThreadOptions;
 
