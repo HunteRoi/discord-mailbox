@@ -247,3 +247,27 @@ export class MailboxManager extends EventEmitter {
  *  console.log(message.id);
  * });
  */
+
+/**
+ * Emitted when the thread channel is created (due to the ticket being created).
+ * @event MailboxManager#threadCreate
+ * @param {Ticket} ticket The ticket
+ * @param {Discord.ThreadChannel} thread The thread channel
+ * @example
+ * manager.on(MailboxManagerEvents.threadCreate, (ticket, thread) => {
+ * console.log(ticket.id) ;
+ * console.log(thread.id);
+ * });
+ */
+
+/**
+ * Emitted when the thread channel is archived (due to the ticket being closed).
+ * @event MailboxManager#threadArchive
+ * @param {Ticket} ticket The ticket
+ * @param {Discord.ThreadChannel} thread The thread channel
+ * @example
+ * manager.on(MailboxManagerEvents.threadArchive, (ticket, thread) => {
+ * console.log(ticket.id) ;
+ * console.log(thread.id);
+ * });
+ */

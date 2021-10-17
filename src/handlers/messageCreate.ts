@@ -114,7 +114,7 @@ export const handleMessage = async (
 				] as AllowedThreadTypeForTextChannel,
 			});
 			ticket.setThreadId(threadChannel.id);
-			manager.emit(MailboxManagerEvents.threadCreate, threadChannel);
+			manager.emit(MailboxManagerEvents.threadCreate, ticket, threadChannel);
 		}
 	}
 
