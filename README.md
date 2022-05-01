@@ -13,6 +13,8 @@ Discord Mailbox is a framework to easily add a mailbox inside your bot. The feat
 
 ![IMAGE](./assets/example.gif)
 
+See [./example/index.js](example/index.js).
+
 ## Prerequisites ⚠️
 
 Starting at **v2.0.0**, you must use **NodeJS v16.6.0 or higher** to run a bot with this library.
@@ -33,10 +35,6 @@ You also must not forget to include [mandatory intents and partials](#mandatory-
 ```sh
 npm install --save @hunteroi/discord-mailbox
 ```
-
-## Examples
-
-See [./example/index.js](example/index.js).
 
 ## Events
 
