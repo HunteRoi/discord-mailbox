@@ -50,27 +50,27 @@ manager.on(MailboxManagerEvents.ticketLog, (ticket: Ticket) => {});
 manager.on(MailboxManagerEvents.ticketClose, (ticket: Ticket) => {});
 
 manager.on(
-	MailboxManagerEvents.ticketForceClose,
-	(ticket: Ticket, user: User | PartialUser) => {}
+  MailboxManagerEvents.ticketForceClose,
+  (ticket: Ticket, user: User | PartialUser) => {}
 );
 
 manager.on(MailboxManagerEvents.ticketDelete, (ticket: Ticket) => {});
 
 manager.on(
-	MailboxManagerEvents.replySent,
-	(message: Message, answer: Message) => {}
+  MailboxManagerEvents.replySent,
+  (message: Message, answer: Message) => {}
 );
 
 manager.on(MailboxManagerEvents.replyDelete, (message: Message) => {});
 
 manager.on(
-	MailboxManagerEvents.threadCreate,
-	(ticket: Ticket, thread: ThreadChannel) => {}
+  MailboxManagerEvents.threadCreate,
+  (ticket: Ticket, thread: ThreadChannel) => {}
 );
 
 manager.on(
-	MailboxManagerEvents.threadArchive,
-	(ticket: Ticket, thread: ThreadChannel) => {}
+  MailboxManagerEvents.threadArchive,
+  (ticket: Ticket, thread: ThreadChannel) => {}
 );
 ```
 

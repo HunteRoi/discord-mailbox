@@ -3,11 +3,11 @@ import { EventEmitter } from 'events';
 import { CronJob } from 'cron';
 
 import {
-	handleMessage,
-	handleReaction,
-	handleClosing,
-	handleLog,
-	handleOpening,
+  handleMessage,
+  handleReaction,
+  handleClosing,
+  handleLog,
+  handleOpening,
 } from './handlers';
 import { MailboxManagerOptions, Ticket } from './types';
 import { MailboxManagerEvents } from '.';
@@ -20,149 +20,149 @@ import { MailboxManagerEvents } from '.';
  * @extends {EventEmitter}
  */
 export class MailboxManager extends EventEmitter {
-	/**
-	 * The configuration of the mailbox manager.
-	 *
-	 * @private
-	 * @type {MailboxManagerOptions}
-	 */
-	public readonly options: MailboxManagerOptions;
+  /**
+   * The configuration of the mailbox manager.
+   *
+   * @private
+   * @type {MailboxManagerOptions}
+   */
+  public readonly options: MailboxManagerOptions;
 
-	/**
-	 * The collection of tickets per user.
-	 *
-	 * @type {Collection<Snowflake, Collection<string, Ticket>>}
-	 * @memberof MailboxManager
-	 */
-	public readonly userTickets: Collection<
-		Snowflake,
-		Collection<string, Ticket>
-	>;
+  /**
+   * The collection of tickets per user.
+   *
+   * @type {Collection<Snowflake, Collection<string, Ticket>>}
+   * @memberof MailboxManager
+   */
+  public readonly userTickets: Collection<
+    Snowflake,
+    Collection<string, Ticket>
+  >;
 
-	/**
-	 * The client that instantiated this Manager
-	 * @name MailboxManager#client
-	 * @type {Client}
-	 * @readonly
-	 */
-	public readonly client: Client;
+  /**
+   * The client that instantiated this Manager
+   * @name MailboxManager#client
+   * @type {Client}
+   * @readonly
+   */
+  public readonly client: Client;
 
-	/**
-	 * The cron job to check if tickets need to be closed because outdated.
-	 *
-	 * @private
-	 * @type {CronJob}
-	 */
-	private job?: CronJob;
+  /**
+   * The cron job to check if tickets need to be closed because outdated.
+   *
+   * @private
+   * @type {CronJob}
+   */
+  private job?: CronJob;
 
-	/**
-	 * Whether the logging options is set with a format method or not
-	 *
-	 * @type {boolean}
-	 */
-	public canFormatLogs: boolean;
+  /**
+   * Whether the logging options is set with a format method or not
+   *
+   * @type {boolean}
+   */
+  public canFormatLogs: boolean;
 
-	/**
-	 * Creates an instance of MailboxManager.
-	 * @param {Client} client
-	 * @param {MailboxManagerOptions} [options]
-	 */
-	constructor(
-		client: Client,
-		options: MailboxManagerOptions = {
-			tooMuchTickets: 'You have too much opened tickets!',
-			notAllowedToPing: 'You are not allowed to mention @everyone and @here.',
-			replyMessage: 'Use the "reply" feature to respond.',
-			ticketClose: (nbUserTicketsLeft) =>
-				`This ticket has been closed. You now have ${nbUserTicketsLeft} tickets that are still opened.`,
-			maxOngoingTicketsPerUser: 3,
-			closeTicketAfter: 60,
-			formatTitle: (id) => `Ticket ${id}`,
-			cronTime: '* * * * *',
-			mailboxChannel: null,
-			threadOptions: null,
-		}
-	) {
-		super();
+  /**
+   * Creates an instance of MailboxManager.
+   * @param {Client} client
+   * @param {MailboxManagerOptions} [options]
+   */
+  constructor(
+    client: Client,
+    options: MailboxManagerOptions = {
+      tooMuchTickets: 'You have too much opened tickets!',
+      notAllowedToPing: 'You are not allowed to mention @everyone and @here.',
+      replyMessage: 'Use the "reply" feature to respond.',
+      ticketClose: (nbUserTicketsLeft) =>
+        `This ticket has been closed. You now have ${nbUserTicketsLeft} tickets that are still opened.`,
+      maxOngoingTicketsPerUser: 3,
+      closeTicketAfter: 60,
+      formatTitle: (id) => `Ticket ${id}`,
+      cronTime: '* * * * *',
+      mailboxChannel: null,
+      threadOptions: null,
+    }
+  ) {
+    super();
 
-		const intents = new Intents(client.options.intents);
-		if (!intents.has(Intents.FLAGS.GUILDS)) {
-			throw new Error('GUILDS intent is required to use this package!');
-		}
-		if (!intents.has(Intents.FLAGS.GUILD_MESSAGES)) {
-			throw new Error('GUILD_MESSAGES intent is required to use this package!');
-		}
-		if (!intents.has(Intents.FLAGS.DIRECT_MESSAGES)) {
-			throw new Error(
-				'DIRECT_MESSAGES intent is required to use this package!'
-			);
-		}
-		if (
-			options.forceCloseEmoji &&
-			!intents.has(Intents.FLAGS.GUILD_MESSAGE_REACTIONS)
-		) {
-			throw new Error(
-				'GUILD_MESSAGE_REACTIONS intent is required to use this package!'
-			);
-		}
+    const intents = new Intents(client.options.intents);
+    if (!intents.has(Intents.FLAGS.GUILDS)) {
+      throw new Error('GUILDS intent is required to use this package!');
+    }
+    if (!intents.has(Intents.FLAGS.GUILD_MESSAGES)) {
+      throw new Error('GUILD_MESSAGES intent is required to use this package!');
+    }
+    if (!intents.has(Intents.FLAGS.DIRECT_MESSAGES)) {
+      throw new Error(
+        'DIRECT_MESSAGES intent is required to use this package!'
+      );
+    }
+    if (
+      options.forceCloseEmoji &&
+      !intents.has(Intents.FLAGS.GUILD_MESSAGE_REACTIONS)
+    ) {
+      throw new Error(
+        'GUILD_MESSAGE_REACTIONS intent is required to use this package!'
+      );
+    }
 
-		const partials = client.options.partials;
-		if (!partials.includes(Constants.PartialTypes.CHANNEL)) {
-			throw new Error('CHANNEL partial is required to use this package!');
-		}
-		if (!partials.includes(Constants.PartialTypes.MESSAGE)) {
-			throw new Error('MESSAGE partial is required to use this package!');
-		}
+    const partials = client.options.partials;
+    if (!partials.includes(Constants.PartialTypes.CHANNEL)) {
+      throw new Error('CHANNEL partial is required to use this package!');
+    }
+    if (!partials.includes(Constants.PartialTypes.MESSAGE)) {
+      throw new Error('MESSAGE partial is required to use this package!');
+    }
 
-		if (!options.mailboxChannel) {
-			throw new Error('Please define the mailbox channel in the options!');
-		}
+    if (!options.mailboxChannel) {
+      throw new Error('Please define the mailbox channel in the options!');
+    }
 
-		this.client = client;
-		this.options = options;
-		this.userTickets = new Collection();
-		this.canFormatLogs =
-			this.options.loggingOptions && !!this.options.loggingOptions.format;
+    this.client = client;
+    this.options = options;
+    this.userTickets = new Collection();
+    this.canFormatLogs =
+      this.options.loggingOptions && !!this.options.loggingOptions.format;
 
-		this.client.on('messageCreate', async (message) => {
-			handleMessage(this, message);
-		});
-		if (this.options.forceCloseEmoji) {
-			this.client.on('messageReactionAdd', async (messageReaction, user) => {
-				await handleReaction(this, messageReaction, user);
-			});
-		}
+    this.client.on('messageCreate', async (message) => {
+      handleMessage(this, message);
+    });
+    if (this.options.forceCloseEmoji) {
+      this.client.on('messageReactionAdd', async (messageReaction, user) => {
+        await handleReaction(this, messageReaction, user);
+      });
+    }
 
-		this.on(MailboxManagerEvents.ticketCreate, async (ticket: Ticket) =>
-			handleOpening(this, ticket)
-		);
-		this.on(MailboxManagerEvents.ticketClose, async (ticket: Ticket) =>
-			handleClosing(this, ticket)
-		);
-		this.on(MailboxManagerEvents.ticketLog, async (ticket: Ticket) =>
-			handleLog(this, ticket)
-		);
+    this.on(MailboxManagerEvents.ticketCreate, async (ticket: Ticket) =>
+      handleOpening(this, ticket)
+    );
+    this.on(MailboxManagerEvents.ticketClose, async (ticket: Ticket) =>
+      handleClosing(this, ticket)
+    );
+    this.on(MailboxManagerEvents.ticketLog, async (ticket: Ticket) =>
+      handleLog(this, ticket)
+    );
 
-		this.job = new CronJob(
-			this.options.cronTime,
-			() => this.checkTickets(),
-			null,
-			null,
-			null,
-			this
-		);
-		this.job.start();
-	}
+    this.job = new CronJob(
+      this.options.cronTime,
+      () => this.checkTickets(),
+      null,
+      null,
+      null,
+      this
+    );
+    this.job.start();
+  }
 
-	checkTickets() {
-		this.userTickets.each((userTickets) => {
-			userTickets.each((ticket) => {
-				if (ticket.isOutdated()) {
-					this.emit(MailboxManagerEvents.ticketClose, ticket);
-				}
-			});
-		});
-	}
+  checkTickets() {
+    this.userTickets.each((userTickets) => {
+      userTickets.each((ticket) => {
+        if (ticket.isOutdated()) {
+          this.emit(MailboxManagerEvents.ticketClose, ticket);
+        }
+      });
+    });
+  }
 }
 
 /**

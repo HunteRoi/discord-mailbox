@@ -6,5 +6,5 @@
  * @return {*}
  */
 export function isNullOrWhiteSpaces(str: string) {
-	return str === undefined || str === null || str.match(/^ *$/) !== null;
+  return str === undefined || str === null || str.match(/^ *$/) !== null;
 }

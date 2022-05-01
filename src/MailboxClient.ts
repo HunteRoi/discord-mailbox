@@ -11,26 +11,23 @@ import { MailboxManager } from './MailboxManager';
  * @extends {Client}
  */
 export class MailboxClient extends Client {
-	/**
-	 * The mailbox manager.
-	 *
-	 * @type {MailboxManager}
-	 * @memberof MailboxClient
-	 */
-	public readonly mailboxManager: MailboxManager;
+  /**
+   * The mailbox manager.
+   *
+   * @type {MailboxManager}
+   * @memberof MailboxClient
+   */
+  public readonly mailboxManager: MailboxManager;
 
-	/**
-	 *Creates an instance of MailboxClient.
-	 * @param {ClientOptions} [options]
-	 * @param {MailboxManagerOptions} [mailboxOptions]
-	 * @memberof MailboxClient
-	 */
-	constructor(
-		mailboxOptions: MailboxManagerOptions,
-		options?: ClientOptions
-	) {
-		super(options);
+  /**
+   *Creates an instance of MailboxClient.
+   * @param {ClientOptions} [options]
+   * @param {MailboxManagerOptions} [mailboxOptions]
+   * @memberof MailboxClient
+   */
+  constructor(mailboxOptions: MailboxManagerOptions, options?: ClientOptions) {
+    super(options);
 
-		this.mailboxManager = new MailboxManager(this, mailboxOptions);
-	}
+    this.mailboxManager = new MailboxManager(this, mailboxOptions);
+  }
 }
