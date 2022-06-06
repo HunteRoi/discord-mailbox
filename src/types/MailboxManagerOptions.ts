@@ -1,5 +1,5 @@
 import { EmojiResolvable, Snowflake } from 'discord.js';
-import { Moment } from 'moment';
+import { DateTime } from 'luxon';
 
 import { EmbedOptions } from './EmbedOptions';
 import { LogsOptions } from './LogsOptions';
@@ -92,10 +92,10 @@ export interface MailboxManagerOptions {
   /**
    * The scheduled time where all tickets are verified for time out.
    *
-   * @type {(string | Date)}
+   * @type {(string | Date| DateTime)}
    * @see {cron} https://www.npmjs.com/package/cron
    */
-  cronTime: string | Date | Moment;
+  cronTime: string | Date | DateTime;
 
   /**
    * The emoji added to mails to trigger the force close.
