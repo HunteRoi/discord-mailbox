@@ -1,127 +1,38 @@
-import { EmojiResolvable, Snowflake } from 'discord.js';
-import { DateTime } from 'luxon';
+import { MessageOptions, TextChannel, VoiceChannel, Snowflake, EmojiIdentifierResolvable, MessageEmbedOptions, GuildTextBasedChannel } from "discord.js";
+import { DateTime } from "luxon";
 
-import { EmbedOptions } from './EmbedOptions';
-import { LogsOptions } from './LogsOptions';
-import { ThreadOptions } from './ThreadOptions';
+import { Ticket } from "./Ticket";
+import { TicketContent } from "./TicketContent";
 
-/**
- * The mailbox manager options.
- *
- * @export
- * @interface MailboxManagerOptions
- */
-export interface MailboxManagerOptions {
-  /**
-   * A method to generate the message to return to the user when their ticket is closed.
-   *
-   * @type {string}
-   */
-  ticketClose: (numberOfTickets: number) => string;
+export type MailboxManagerOptions = {
+    mailboxChannel: TextChannel | VoiceChannel | Snowflake;
+    closeTicketAfterInMilliseconds: number;
+    maxOnGoingTicketsPerUser: number;
+    crontime: string | Date | DateTime;
+};
 
-  /**
-   * The message to return when a user has too much not-closed tickets and is trying to create a new one.
-   *
-   * @type {string}
-   */
-  tooMuchTickets: string;
+export type MessageBasedMailboxManagerOptions = {
+    loggingOptions?: LoggingOptions;
+    threadOptions?: ThreadOptions;
+    forceCloseEmoji?: EmojiIdentifierResolvable;
+    replySentEmoji?: EmojiIdentifierResolvable;
+    embedOptions?: MessageEmbedOptions;
+    formatTitle: (ticket: Ticket) => string;
+    replyMessage: string;
+    deleteReplies?: boolean;
+} & MailboxManagerOptions;
 
-  /**
-   * The message to return when a ticket message contains @everyone or @here
-   *
-   * @type {string}
-   */
-  notAllowedToPing: string;
+export type InteractionBasedMailboxManagerOptions = {} & MessageBasedMailboxManagerOptions;
 
-  /**
-   * The text under each embed that says "reply to continue messaging with this ticket".
-   *
-   * @type {string}
-   */
-  replyMessage: string;
+export type LoggingOptions = {
+    generateFileName(ticket: Ticket): string;
+    generateMessage: (ticket: Ticket) => string | MessageOptions;
+    generateLogEntry: (ticketContent: TicketContent) => string;
+    showSenderNames: boolean;
+    logChannel: GuildTextBasedChannel;
+};
 
-  /**
-   * The text message sent to the user opening a new ticket.
-   *
-   * @type {string}
-   */
-  autoReplyMessage?: string;
-
-  /**
-   * The maximum of possibly not-closed tickets per user.
-   *
-   * @type {number}
-   */
-  maxOngoingTicketsPerUser: number;
-
-  /**
-   * The channel in which the tickets' messages are sent.
-   *
-   * @type {Snowflake}
-   */
-  mailboxChannel: Snowflake;
-
-  /**
-   * The thread options. If set, threads are used with the {@link mailboxChannel} as parent.
-   *
-   * @type {ThreadOptions}
-   */
-  threadOptions?: ThreadOptions;
-
-  /**
-   * Whether the replies in the mailbox channel should get deleted or not.
-   *
-   * @type {boolean}
-   */
-  deleteReplies?: boolean;
-
-  /**
-   * Seconds after which, if no interaction for a ticket, should it be closed.
-   *
-   * @type {number}
-   */
-  closeTicketAfter: number;
-
-  /**
-   * Format of the ticket title. The ticket id must be present in the returned string.
-   *
-   * @required
-   */
-  formatTitle: (ticketId: string) => string;
-
-  /**
-   * The scheduled time where all tickets are verified for time out.
-   *
-   * @type {(string | Date| DateTime)}
-   * @see {cron} https://www.npmjs.com/package/cron
-   */
-  cronTime: string | Date | DateTime;
-
-  /**
-   * The emoji added to mails to trigger the force close.
-   *
-   * @type {EmojiResolvable}
-   */
-  forceCloseEmoji?: EmojiResolvable;
-
-  /**
-   * The emoji to add as reaction to a ticket when a reply has been sent already.
-   *
-   * @type {EmojiResolvable}
-   */
-  replySentEmoji?: EmojiResolvable;
-
-  /**
-   * The logging options.
-   *
-   * @type {LogsOptions}
-   */
-  loggingOptions?: LogsOptions;
-
-  /**
-   * The embed options.
-   *
-   * @type {EmbedOptions}
-   */
-  embedOptions?: EmbedOptions;
-}
+export type ThreadOptions = {
+    name: (ticket: Ticket) => string;
+    startMessage: (ticket: Ticket) => string | MessageOptions;
+};

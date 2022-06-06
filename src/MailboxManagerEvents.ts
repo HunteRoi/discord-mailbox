@@ -5,18 +5,17 @@
  * @enum {string}
  */
 export enum MailboxManagerEvents {
-  ticketCreate = 'ticketCreate',
-  ticketUpdate = 'ticketUpdate',
-  ticketLog = 'ticketLog',
-  ticketClose = 'ticketClose',
-  ticketForceClose = 'ticketForceClose',
-  ticketDelete = 'ticketDelete',
-
-  threadCreate = 'threadCreate',
-  threadArchive = 'threadArchive',
-
-  replySent = 'replySent',
-  replyDelete = 'replyDelete',
-
-  error = 'error',
+    ticketCreate = 'ticketCreate',
+    ticketUpdate = 'ticketUpdate',
+    ticketClose = 'ticketClose',
+    ticketLog = 'ticketLog'
 }
+
+export enum MessageBasedMailboxManagerEvents {
+    threadCreate = 'threadCreate',
+    replyDelete = 'replyDelete',
+    replySent = 'replySent',
+    ticketForceClose = 'ticketForceClose'
+};
+
+export enum InteractionBasedMailboxManagedEvents { }
