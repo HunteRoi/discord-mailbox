@@ -7,7 +7,7 @@ import { isNullOrWhiteSpaces } from "./utils/StringUtils";
 import { arrowDown, arrowUp } from "./utils/constants";
 
 export class MessageBasedMailboxManager extends MailboxManager {
-    protected options: MessageBasedMailboxManagerOptions;
+    protected override readonly options!: MessageBasedMailboxManagerOptions;
 
     constructor(client: Client, options: MessageBasedMailboxManagerOptions) {
         super(client, options);
@@ -134,7 +134,7 @@ export class MessageBasedMailboxManager extends MailboxManager {
     }
 
     private async onGuildReply(message: Message) {
-        if (!message.reference) throw new Error('Message is not a reply.');
+        if (!message.reference || !message.reference.messageId) throw new Error('Message is not a reply.');
         const previousMessage = await message.channel.messages.fetch(message.reference.messageId);
         const lastMessageId = this.extractMessageId(previousMessage);
         if (!lastMessageId) throw new Error('Previous message does not contain message ID.');
@@ -147,13 +147,13 @@ export class MessageBasedMailboxManager extends MailboxManager {
             ? await this.client.channels.fetch(this.options.mailboxChannel) as BaseGuildTextChannel
             : this.options.mailboxChannel;
         let thread: ThreadChannel | null = null;
-        if (guildChannel.id !== ticket.channelId) {
+        if (ticket.channelId && guildChannel.id !== ticket.channelId) {
             thread = await (guildChannel as BaseGuildTextChannel).threads.fetch(ticket.channelId);
         }
 
-        const embed = previousMessage.embeds && previousMessage.embeds[0];
+        const embed = previousMessage.embeds && previousMessage.embeds.length > 0 ? previousMessage.embeds[0] : null;
         if (embed) {
-            embed.setAuthor({ name: embed.author.name, iconURL: arrowUp });
+            embed.setAuthor({ name: embed.author?.name ?? this.client.user?.username ?? 'Unknown', iconURL: arrowUp });
             await previousMessage.edit({
                 content: previousMessage.content || null,
                 embeds: [embed],
@@ -176,13 +176,13 @@ export class MessageBasedMailboxManager extends MailboxManager {
         this.emit(MessageBasedMailboxManagerEvents.replySent, message, answerMessage);
     }
 
-    private extractMessageId(ticketContent: TicketContent): Snowflake {
-        let messageId: Snowflake;
+    private extractMessageId(ticketContent: TicketContent): Snowflake | null | undefined {
+        let messageId: Snowflake | null | undefined;
         if (this.options.embedOptions) {
-            messageId = ticketContent.embeds[0].footer.text.replace('ID: ', '');
+            messageId = ticketContent.embeds[0].footer?.text.replace('ID: ', '');
         } else {
             const footer = ticketContent.content.split('\n\n​').pop();
-            messageId = footer.replace('ID: ', '');
+            messageId = footer?.replace('ID: ', '');
         }
         return messageId;
     }
@@ -193,7 +193,7 @@ export class MessageBasedMailboxManager extends MailboxManager {
         }
 
         const botMessage = reaction.message;
-        const lastMessageId = this.extractMessageId(botMessage);
+        const lastMessageId = this.extractMessageId(botMessage as TicketContent);
         if (!lastMessageId) throw new Error('Previous message does not contain message ID.');
 
         const userTickets = this.usersTickets.find((userTickets: UserTickets) => userTickets.some((ticket: Ticket) => ticket.lastMessage.id === lastMessageId));
@@ -204,13 +204,13 @@ export class MessageBasedMailboxManager extends MailboxManager {
             ? await this.client.channels.fetch(this.options.mailboxChannel) as BaseGuildTextChannel
             : this.options.mailboxChannel;
         let thread: ThreadChannel | null = null;
-        if (guildChannel.id !== ticket.channelId) {
+        if (ticket.channelId && guildChannel.id !== ticket.channelId) {
             thread = await (guildChannel as BaseGuildTextChannel).threads.fetch(ticket.channelId);
         }
 
-        const embed = botMessage.embeds && botMessage.embeds[0];
+        const embed = botMessage.embeds && botMessage.embeds.length > 0 ? botMessage.embeds[0] : null;
         if (embed) {
-            embed.setAuthor({ name: embed.author.name, iconURL: arrowUp });
+            embed.setAuthor({ name: embed.author?.name ?? this.client.user?.username ?? 'Unknown', iconURL: arrowUp });
             await botMessage.edit({
                 content: botMessage.content || null,
                 embeds: [embed],

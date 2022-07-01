@@ -5,7 +5,7 @@ import { MailboxManagerEvents } from "./MailboxManagerEvents";
 import { InteractionBasedMailboxManagerOptions, Ticket } from "./types";
 
 export class InteractionBasedMailboxManager extends MailboxManager {
-    protected options: InteractionBasedMailboxManagerOptions;
+    protected override readonly options!: InteractionBasedMailboxManagerOptions;
 
     constructor(client: Client, options: InteractionBasedMailboxManagerOptions) {
         super(client, options);

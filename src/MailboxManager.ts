@@ -54,7 +54,9 @@ export class MailboxManager extends EventEmitter implements IMailboxManager {
     replyToTicket(content: TicketContent, ticketId: string): void {
         const user: User = content.author;
         const userTickets = this.usersTickets.get(user.id);
-        const ticket = userTickets?.get(ticketId);
+        if (!userTickets) throw new Error('Author does not have any opened ticket with provided ticket ID');
+
+        const ticket = userTickets.get(ticketId);
         if (!ticket) throw new Error('Provided ticket ID does not exist for this user');
 
         ticket.addMessage(content);
@@ -63,7 +65,9 @@ export class MailboxManager extends EventEmitter implements IMailboxManager {
 
     closeTicket(ticketId: string): void {
         const userTickets = this.usersTickets.find((userTickets: UserTickets) => userTickets.has(ticketId));
-        const ticket = userTickets?.get(ticketId);
+        if (!userTickets) throw new Error('Provided ticket ID does not exist for any user');
+
+        const ticket = userTickets.get(ticketId);
         if (!ticket) throw new Error('Provided ticket ID does not exist for this user');
 
         ticket.close();

@@ -9,9 +9,9 @@ export class Ticket {
     readonly createdAt: EpochTimeStamp;
     readonly messages: TicketContent[];
 
+    #lastMessage!: TicketContent;
+    #channelId: Snowflake | null;
     #closedAt: EpochTimeStamp | null;
-    #lastMessage: TicketContent;
-    #channelId: Snowflake;
 
     get closedAt(): number | null {
         return this.#closedAt;
@@ -21,7 +21,7 @@ export class Ticket {
         return this.#lastMessage;
     }
 
-    get channelId(): Snowflake {
+    get channelId(): Snowflake | null {
         return this.#channelId;
     }
 
@@ -31,6 +31,8 @@ export class Ticket {
         this.createdBy = firstMessage.author;
         this.createdAt = firstMessage.createdTimestamp;
 
+        this.#closedAt = null;
+        this.#channelId = null;
         this.addMessage(firstMessage);
     }
 
