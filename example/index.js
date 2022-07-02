@@ -1,6 +1,6 @@
 const { Client, Intents, Constants } = require('discord.js');
 
-const { MailboxManager, MailboxManagerEvents } = require('../lib');
+const { MessageBasedMailboxManager, MailboxManagerEvents, MessageBasedMailboxManagerEvents } = require('../lib');
 
 const client = new Client({
   intents: [
@@ -11,50 +11,41 @@ const client = new Client({
   ],
   partials: [Constants.PartialTypes.CHANNEL, Constants.PartialTypes.MESSAGE],
 });
-const manager = new MailboxManager(client, {
-  forceCloseEmoji: '❌',
-  replySentEmoji: '📤',
+const manager = new MessageBasedMailboxManager(client, {
+  mailboxChannel: 'TEXT_CHANNEL_ID',
+  closeTicketAfterInMilliseconds: 60000, // in milliseconds
+  maxOngoingTicketsPerUser: 3,
+  cronTime: '* * * * *', // run each minute
   loggingOptions: {
     generateFilename: (ticket) => `log-ticket-${ticket.id}.txt`,
-    format: (msg) =>
-      `[${new Date(msg.createdTimestamp)}] ${msg.author.username} | ${
-        msg.cleanContent
-      }`,
     generateMessage: (ticket) =>
       `Logs for ticket ${ticket.id} - closed at ${new Date(ticket.closedAt)}`,
+    generateLogEntry: (ticketContent) =>
+      `[${new Date(ticketContent.createdTimestamp)}] ${ticketContent.author.username} | ${
+        ticketContent.cleanContent
+      }`,
+    showSenderNames: true,
     sendToRecipient: false,
     channel: 'TEXT_CHANNEL_ID',
-    showName: false,
   },
-  mailboxChannel: 'TEXT_CHANNEL_ID',
   threadOptions: {
     name: (ticket) => `Ticket ${ticket.id}`,
-    startMessage: (ticket) => `New ticket created for <@${ticket.createdBy}>`,
+    startMessage: (ticket) => `New ticket created by ${ticket.createdBy} for <@&ROLE_ID>`,
   },
-  deleteReplies: true,
-  cronTime: '* * * * *', // run each minute
-  closeTicketAfter: 60, // in seconds
-  maxOngoingTicketsPerUser: 3,
-  notAllowedToPing:
-    'You are not allowed to mention @everyone or @here in a mail!',
-  replyMessage:
-    'Please use the "reply" feature to send an answer to this message.',
-  autoReplyMessage:
-    'Your ticket has been received and will be treated soon. Please remain patient as we get back to you!',
-  tooMuchTickets:
-    'You have too much tickets that are not closed! Please wait for your tickets to be closed before submitting new ones.',
-  ticketClose: (nbTickets) =>
-    `This ticket has been closed due to inactivity or manually by the receiver. You now have ${nbTickets} tickets left opened.`,
-  replyMessageInFooter: true,
   embedOptions: {
-    send: true,
     color: 12272523,
   },
-  formatTitle: (id) => `[Ticket] ${id}`,
+  forceCloseEmoji: '❌',
+  replySentEmoji: '📤',
+  formatTitle: (ticket) => `[Ticket] ${ticket.id}`,
+  replyMessage:
+    'Please use the "reply" feature to send an answer to this message.',
+  closedChannelPrefix: '[Closed] ',
+  tooMuchTickets:
+    'You have too much tickets that are not closed! Please wait for your tickets to be closed before submitting new ones.'
 });
 
 client.on('ready', () => console.log('Connected!'));
-
 client.on('messageCreate', (message) => {
   if (message.content === 'show me the tickets collection') {
     message.reply(
@@ -63,23 +54,32 @@ client.on('messageCreate', (message) => {
   }
 });
 
-manager.on(MailboxManagerEvents.ticketCreate, (ticket) =>
-  console.log(`${ticket.id} has been created!`)
-);
+manager.on(MailboxManagerEvents.ticketCreate, async (ticket) => {
+  console.log(`${ticket.id} has been created!`);
+
+  // autoReplyMessage feature
+  const user = ticket.createdBy;
+  await user.send('Your ticket has been received and will be treated soon. Please remain patient as we get back to you!');
+});
 manager.on(MailboxManagerEvents.ticketUpdate, (ticket) =>
   console.log(`${ticket.id} has been updated with a new message.`)
 );
 manager.on(MailboxManagerEvents.ticketLog, (ticket) =>
   console.log(`${ticket.id} got logged.`)
 );
-manager.on(MailboxManagerEvents.ticketClose, (ticket) =>
-  console.log(`${ticket.id} got closed!`)
-);
-manager.on(MailboxManagerEvents.ticketForceClose, (ticket, user) =>
+manager.on(MailboxManagerEvents.ticketClose, async (ticket, userTickets) => {
+  console.log(`${ticket.id} got closed!`);
+
+  // ticketClose feature
+  const user = ticket.createdBy;
+  const nbTickets = userTickets.length;
+  await user.send(`The ticket ${ticket.id} has been closed due to inactivity or manually by the receiver.\nYou now have ${nbTickets} tickets left opened.`);
+});
+manager.on(MessageBasedMailboxManagerEvents.ticketForceClose, (ticket, user) =>
   console.log(`${user.username} forced closed ticket ${ticket.id}.`)
 );
-manager.on(MailboxManagerEvents.ticketDelete, (ticket) =>
-  console.log(`${ticket.id} got deleted.`)
-);
+manager.on(MessageBasedMailboxManagerEvents.threadCreate, (ticket, thread) => {
+  console.log(`${ticket.id} is happening in ${thread.name}`);
+});
 
 client.login('TOKEN');

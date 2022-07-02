@@ -1,4 +1,4 @@
-import { MessageOptions, TextChannel, VoiceChannel, Snowflake, EmojiIdentifierResolvable, MessageEmbedOptions, GuildTextBasedChannel } from "discord.js";
+import { MessageOptions, TextChannel, VoiceChannel, Snowflake, EmojiIdentifierResolvable, MessageEmbedOptions, GuildTextBasedChannel, RoleResolvable } from "discord.js";
 import { DateTime } from "luxon";
 
 import { Ticket } from "./Ticket";
@@ -8,28 +8,36 @@ export type MailboxManagerOptions = {
     mailboxChannel: TextChannel | VoiceChannel | Snowflake;
     closeTicketAfterInMilliseconds: number;
     maxOnGoingTicketsPerUser: number;
-    crontime: string | Date | DateTime;
+    cronTime: string | Date | DateTime;
 };
 
 export type MessageBasedMailboxManagerOptions = {
     loggingOptions?: LoggingOptions;
     threadOptions?: ThreadOptions;
+    embedOptions?: MessageEmbedOptions;
     forceCloseEmoji?: EmojiIdentifierResolvable;
     replySentEmoji?: EmojiIdentifierResolvable;
-    embedOptions?: MessageEmbedOptions;
     formatTitle: (ticket: Ticket) => string;
     replyMessage: string;
-    deleteReplies?: boolean;
+    closedChannelPrefix?: string;
+    tooMuchTickets?: string;
 } & MailboxManagerOptions;
 
 export type InteractionBasedMailboxManagerOptions = {} & MessageBasedMailboxManagerOptions;
 
 export type LoggingOptions = {
-    generateFileName(ticket: Ticket): string;
+    generateFilename: (ticket: Ticket) => string;
     generateMessage: (ticket: Ticket) => string | MessageOptions;
     generateLogEntry: (ticketContent: TicketContent) => string;
     showSenderNames: boolean;
-    logChannel: GuildTextBasedChannel;
+    /**
+     * @deprecated will be removed in next minor update.
+     * Users have the right to have a copy of the conversation.
+     *
+     * @type {boolean | undefined}
+     */
+    sendToRecipient?: boolean;
+    channel: GuildTextBasedChannel;
 };
 
 export type ThreadOptions = {
