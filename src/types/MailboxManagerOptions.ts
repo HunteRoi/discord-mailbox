@@ -38,6 +38,7 @@ export type LoggingOptions = {
      */
     sendToRecipient?: boolean;
     channel: GuildTextBasedChannel;
+    sendInThread?: boolean;
 };
 
 export type ThreadOptions = {

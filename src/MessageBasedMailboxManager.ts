@@ -107,12 +107,17 @@ export class MessageBasedMailboxManager extends MailboxManager {
             await user.send(logMessage);
         }
 
-        const logChannel = typeof this.options.loggingOptions.channel === 'string'
-            ? await this.client.channels.fetch(
-                this.options.loggingOptions.channel
-            ) as GuildTextBasedChannel
-            : this.options.loggingOptions.channel;
-        await logChannel.send(logMessage);
+        if (this.options.loggingOptions.sendInThread && ticket.channelId !== null) {
+            const thread = await this.client.channels.fetch(ticket.channelId) as ThreadChannel;
+            await thread.send(logMessage);
+        } else {
+            const logChannel = typeof this.options.loggingOptions.channel === 'string'
+                ? await this.client.channels.fetch(
+                    this.options.loggingOptions.channel
+                ) as GuildTextBasedChannel
+                : this.options.loggingOptions.channel;
+            await logChannel.send(logMessage);
+        }
     }
 
     private async onDMCreate(message: Message) {
@@ -189,6 +194,11 @@ export class MessageBasedMailboxManager extends MailboxManager {
 
         const ticketMessage = this.generateMessageFromTicket(ticket);
         const answerMessage = await ticket.createdBy.send(ticketMessage);
+
+        if (this.options.forceCloseEmoji) {
+            await answerMessage.react(this.options.forceCloseEmoji);
+        }
+
         this.emit(MessageBasedMailboxManagerEvents.replySent, message, answerMessage);
     }
 

@@ -8,8 +8,9 @@ const client = new Client({
     Intents.FLAGS.GUILD_MESSAGES,
     Intents.FLAGS.GUILD_MESSAGE_REACTIONS,
     Intents.FLAGS.DIRECT_MESSAGES,
+    Intents.FLAGS.DIRECT_MESSAGE_REACTIONS
   ],
-  partials: [Constants.PartialTypes.CHANNEL, Constants.PartialTypes.MESSAGE],
+  partials: [Constants.PartialTypes.CHANNEL, Constants.PartialTypes.MESSAGE, Constants.PartialTypes.REACTION ],
 });
 const manager = new MessageBasedMailboxManager(client, {
   mailboxChannel: 'TEXT_CHANNEL_ID',
@@ -27,6 +28,7 @@ const manager = new MessageBasedMailboxManager(client, {
     showSenderNames: true,
     sendToRecipient: false,
     channel: 'TEXT_CHANNEL_ID',
+    sendInThread: true,
   },
   threadOptions: {
     name: (ticket) => `Ticket ${ticket.id}`,
@@ -73,7 +75,7 @@ manager.on(MailboxManagerEvents.ticketClose, async (ticket, userTickets) => {
   // ticketClose feature
   const user = ticket.createdBy;
   const nbTickets = userTickets.length;
-  await user.send(`The ticket ${ticket.id} has been closed due to inactivity or manually by the receiver.\nYou now have ${nbTickets} tickets left opened.`);
+  await user.send(`The ticket ${ticket.id} has been closed due to inactivity or manually by the receiver or yourself.\nYou now have ${nbTickets} opened tickets left.`);
 });
 manager.on(MessageBasedMailboxManagerEvents.ticketForceClose, (ticket, user) =>
   console.log(`${user.username} forced closed ticket ${ticket.id}.`)
