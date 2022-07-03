@@ -1,4 +1,4 @@
-import { Client, Collection, User } from 'discord.js';
+import { Client, Collection } from 'discord.js';
 import { EventEmitter } from 'events';
 import { CronJob } from 'cron';
 
@@ -29,11 +29,10 @@ export class MailboxManager extends EventEmitter implements IMailboxManager {
     }
 
     checkTickets(): void {
-        this.usersTickets.each((userTickets: UserTickets) => {
-            userTickets.each((ticket: Ticket) => {
-                if (ticket.isOutdated(this.options.closeTicketAfterInMilliseconds)) {
+        this.usersTickets.each((ut: UserTickets) => {
+            ut.each((ticket: Ticket) => {
+                if (ticket.isOutdated(this.options.closeTicketAfterInMilliseconds))
                     this.closeTicket(ticket.id);
-                }
             });
         });
     }
@@ -42,9 +41,8 @@ export class MailboxManager extends EventEmitter implements IMailboxManager {
         const ticket = new Ticket(content);
 
         const userTickets = this.usersTickets.get(ticket.createdBy.id) ?? new Collection<string, Ticket>();
-        if (userTickets.size === this.options.maxOnGoingTicketsPerUser) {
+        if (userTickets.size === this.options.maxOnGoingTicketsPerUser)
             throw new Error(ErrorMessages.tooMuchTicketsOpened);
-        }
         userTickets.set(ticket.id, ticket);
         this.usersTickets.set(ticket.createdBy.id, userTickets);
 
@@ -53,29 +51,37 @@ export class MailboxManager extends EventEmitter implements IMailboxManager {
     }
 
     replyToTicket(content: TicketContent, ticketId: string): void {
-        const userTickets = this.usersTickets.find((userTickets: UserTickets) => userTickets.some((ticket: Ticket) => ticket.id === ticketId));
-        const ticket = userTickets?.find((ticket: Ticket) => ticket.id === ticketId);
-        if (!ticket) throw new Error(ErrorMessages.noUserHasOpenedTicketWithId);
+        const ticket = this.getTicketById(ticketId);
 
         ticket.addMessage(content);
         this.emit(MailboxManagerEvents.ticketUpdate, ticket);
     }
 
     closeTicket(ticketId: string): void {
-        const userTickets = this.usersTickets.find((userTickets: UserTickets) => userTickets.has(ticketId));
-        if (!userTickets) throw new Error(ErrorMessages.noUserHasOpenedTicketWithId);
-
-        const ticket = userTickets.get(ticketId);
-        if (!ticket) throw new Error(ErrorMessages.noOpenedTicketWithId);
-
-        ticket.close();
+        const ticket = this.getTicketById(ticketId);
+        const userTickets = this.usersTickets.get(ticket.createdBy.id)!;
 
         let tickets: Ticket[] = [];
+        ticket.close();
         userTickets.delete(ticket.id);
         if (userTickets.size === 0) this.usersTickets.delete(ticket.createdBy.id);
         else tickets = [...userTickets.values()];
 
         this.emit(MailboxManagerEvents.ticketClose, ticket, tickets);
         this.emit(MailboxManagerEvents.ticketLog, ticket);
+    }
+
+    getTicketById(ticketId: string): Ticket {
+        const ticket = this.usersTickets.flatMap((userTickets: UserTickets) => userTickets).find((t: Ticket) => t.id === ticketId);
+        if (!ticket) throw new Error(ErrorMessages.noOpenedTicketWithId);
+        return ticket;
+    }
+
+    getTicketByLastMessage(lastMessageId: string, safeReturn?: false): Ticket;
+    getTicketByLastMessage(lastMessageId: string, safeReturn: true): Ticket | undefined;
+    getTicketByLastMessage(lastMessageId: string, safeReturn: boolean = false): Ticket | undefined {
+        const ticket = this.usersTickets.flatMap((userTickets: UserTickets) => userTickets).find((t: Ticket) => t.lastMessage.id === lastMessageId);
+        if (!safeReturn && !ticket) throw new Error(ErrorMessages.messageHasNoTicket);
+        return ticket;
     }
 }

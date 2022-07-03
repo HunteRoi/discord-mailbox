@@ -1,4 +1,4 @@
-import { MessageOptions, TextChannel, VoiceChannel, Snowflake, EmojiIdentifierResolvable, MessageEmbedOptions, GuildTextBasedChannel, RoleResolvable } from "discord.js";
+import { MessageOptions, TextChannel, VoiceChannel, Snowflake, EmojiIdentifierResolvable, MessageEmbedOptions, GuildTextBasedChannel, InteractionButtonOptions, TextInputComponentOptions } from "discord.js";
 import { DateTime } from "luxon";
 
 import { Ticket } from "./Ticket";
@@ -23,7 +23,19 @@ export type MessageBasedMailboxManagerOptions = {
     tooMuchTickets?: string;
 } & MailboxManagerOptions;
 
-export type InteractionBasedMailboxManagerOptions = {} & MessageBasedMailboxManagerOptions;
+export type InteractionBasedMailboxManagerOptions = {
+    openTicketCommandName: string;
+    startButtonOptions: Exclude<InteractionButtonOptions, 'customId'>
+    replyButtonOptions: Exclude<InteractionButtonOptions, 'customId'>,
+    forceCloseButtonOptions: Exclude<InteractionButtonOptions, 'emoji' | 'customId'>,
+    modalOptions: ModalOptions;
+    interactionReply: string;
+} & MessageBasedMailboxManagerOptions;
+
+export type ModalOptions = {
+    title: string;
+    modalComponentsOptions: Exclude<TextInputComponentOptions, 'required' | 'value'>;
+};
 
 export type LoggingOptions = {
     generateFilename: (ticket: Ticket) => string;

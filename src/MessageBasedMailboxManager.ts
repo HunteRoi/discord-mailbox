@@ -1,4 +1,4 @@
-import { Client, Constants, BaseGuildTextChannel, Message, MessageReaction, PartialMessage, PartialMessageReaction, PartialUser, ThreadChannel, User, AllowedThreadTypeForTextChannel, MessageEmbed, MessageOptions, Snowflake, GuildTextBasedChannel } from "discord.js";
+import { Client, Constants, BaseGuildTextChannel, Message, MessageReaction, PartialMessage, PartialMessageReaction, PartialUser, ThreadChannel, User, AllowedThreadTypeForTextChannel, MessageEmbed, MessageOptions, Snowflake, GuildTextBasedChannel, PartialTextBasedChannelFields, TextBasedChannelFields } from "discord.js";
 
 import { MailboxManager } from "./MailboxManager";
 import { MailboxManagerEvents, MessageBasedMailboxManagerEvents } from "./MailboxManagerEvents";
@@ -103,13 +103,13 @@ export class MessageBasedMailboxManager extends MailboxManager {
             };
 
         if (this.options.loggingOptions.sendToRecipient) {
-            const user = await this.client.users.fetch(ticket.createdBy);
-            await user.send(logMessage);
+            await ticket.createdBy.send(logMessage);
         }
 
-        if (this.options.loggingOptions.sendInThread && ticket.channelId !== null) {
-            const thread = await this.client.channels.fetch(ticket.channelId) as ThreadChannel;
+        if (this.options.loggingOptions.sendInThread && ticket.threadId !== null) {
+            const thread = await this.client.channels.fetch(ticket.threadId) as ThreadChannel;
             await thread.send(logMessage);
+            await this.updateThread(ticket);
         } else {
             const logChannel = typeof this.options.loggingOptions.channel === 'string'
                 ? await this.client.channels.fetch(
@@ -126,40 +126,15 @@ export class MessageBasedMailboxManager extends MailboxManager {
         if (message.reference && message.reference.messageId) {
             const previousMessage = await message.channel.messages.fetch(message.reference.messageId);
             const lastMessageId = this.extractMessageId(previousMessage);
-            if (!lastMessageId) throw new Error(ErrorMessages.noPreviousMessageId);
-
-            const userTickets = this.usersTickets.find((userTickets: UserTickets) => userTickets.some((ticket: Ticket) => ticket.lastMessage.id === lastMessageId));
-            ticket = userTickets?.find((ticket: Ticket) => ticket.lastMessage.id === lastMessageId);
+            ticket = this.getTicketByLastMessage(lastMessageId, true);
         }
 
-        const guildChannel = typeof this.options.mailboxChannel === 'string'
-            ? await this.client.channels.fetch(this.options.mailboxChannel) as BaseGuildTextChannel
-            : this.options.mailboxChannel;
-        let thread: ThreadChannel | null = null;
-        if (ticket) {
-            this.replyToTicket(message as TicketContent, ticket.id);
+        if (ticket) this.replyToTicket(message as TicketContent, ticket.id);
+        else ticket = this.createTicket(message);
 
-            if (this.options.threadOptions && guildChannel.type !== Constants.ChannelTypes[Constants.ChannelTypes.GUILD_VOICE] && ticket.channelId !== null) {
-                thread = await this.client.channels.fetch(ticket.channelId) as ThreadChannel;
-            }
-        } else {
-            ticket = this.createTicket(message);
-
-            if (this.options.threadOptions && guildChannel.type !== Constants.ChannelTypes[Constants.ChannelTypes.GUILD_VOICE]) {
-                const startMessage = await guildChannel.send(this.options.threadOptions.startMessage(ticket));
-                thread = await (guildChannel as BaseGuildTextChannel).threads.create({
-                    name: this.options.threadOptions.name(ticket),
-                    autoArchiveDuration: 'MAX',
-                    startMessage,
-                    type: Constants.ChannelTypes[Constants.ChannelTypes.GUILD_PUBLIC_THREAD] as AllowedThreadTypeForTextChannel,
-                });
-                ticket.setChannel(thread.id);
-                this.emit(MessageBasedMailboxManagerEvents.threadCreate, ticket, thread);
-            }
-        }
-
+        const channel = await this.getChannel(ticket);
         const ticketMessage = this.generateMessageFromTicket(ticket);
-        const answerMessage = await (thread ?? guildChannel).send(ticketMessage);
+        const answerMessage = await channel.send(ticketMessage);
 
         if (this.options.forceCloseEmoji) {
             await answerMessage.react(this.options.forceCloseEmoji);
@@ -170,11 +145,7 @@ export class MessageBasedMailboxManager extends MailboxManager {
         if (!message.reference || !message.reference.messageId) throw new Error(ErrorMessages.messageIsNotReply);
         const previousMessage = await message.channel.messages.fetch(message.reference.messageId);
         const lastMessageId = this.extractMessageId(previousMessage);
-        if (!lastMessageId) throw new Error(ErrorMessages.noPreviousMessageId);
-
-        const userTickets = this.usersTickets.find((userTickets: UserTickets) => userTickets.some((ticket: Ticket) => ticket.lastMessage.id === lastMessageId));
-        const ticket = userTickets?.find((ticket: Ticket) => ticket.lastMessage.id === lastMessageId);
-        if (!ticket) throw new Error(ErrorMessages.messageHasNoTicket);
+        const ticket = this.getTicketByLastMessage(lastMessageId);
 
         this.replyToTicket(message as TicketContent, ticket.id);
 
@@ -202,7 +173,7 @@ export class MessageBasedMailboxManager extends MailboxManager {
         this.emit(MessageBasedMailboxManagerEvents.replySent, message, answerMessage);
     }
 
-    private extractMessageId(message: Message<boolean> | PartialMessage): Snowflake | null | undefined {
+    private extractMessageId(message: Message<boolean> | PartialMessage): Snowflake {
         let messageId: Snowflake | null | undefined;
         if (this.options.embedOptions && message.embeds) {
             messageId = message.embeds[0]?.footer?.text?.replace('ID: ', '');
@@ -210,12 +181,15 @@ export class MessageBasedMailboxManager extends MailboxManager {
             const footer = message.content?.split('\n\n​')?.pop();
             messageId = footer?.replace('ID: ', '');
         }
+
+        if (!messageId) throw new Error(ErrorMessages.noPreviousMessageId);
+
         return messageId;
     }
 
-    private generateMessageFromTicket(ticket: Ticket): string | MessageOptions {
-        const isSentToAdmin = ticket.lastMessage.channel.type === Constants.ChannelTypes[Constants.ChannelTypes.DM]
-            || ticket.lastMessage.channel.type === Constants.ChannelTypes[Constants.ChannelTypes.GROUP_DM];
+    private generateMessageFromTicket(ticket: Ticket): MessageOptions {
+        const isSentToAdmin = ticket.lastMessage.channel?.type === Constants.ChannelTypes[Constants.ChannelTypes.DM]
+            || ticket.lastMessage.channel?.type === Constants.ChannelTypes[Constants.ChannelTypes.GROUP_DM];
 
         const header = this.options.formatTitle(ticket);
         if (isNullOrWhiteSpaces(header) || !header.includes(ticket.id)) {
@@ -239,7 +213,9 @@ export class MessageBasedMailboxManager extends MailboxManager {
                         .setTimestamp()
                 ]
             } as MessageOptions
-            : `${header}\n\n​${description}\n\n​${footer}`;
+            : {
+                content: `${header}\n\n​${description}\n\n​${footer}`
+            };
     }
 
     private async onReactionAdd(reaction: MessageReaction, user: User): Promise<void> {
@@ -249,11 +225,8 @@ export class MessageBasedMailboxManager extends MailboxManager {
 
         const botMessage = reaction.message;
         const lastMessageId = this.extractMessageId(botMessage);
-        if (!lastMessageId) throw new Error(ErrorMessages.noPreviousMessageId);
 
-        const userTickets = this.usersTickets.find((userTickets: UserTickets) => userTickets.some((ticket: Ticket) => ticket.lastMessage.id === lastMessageId));
-        const ticket = userTickets?.find((ticket: Ticket) => ticket.lastMessage.id === lastMessageId);
-        if (!ticket) throw new Error(ErrorMessages.messageHasNoTicket);
+        const ticket = this.getTicketByLastMessage(lastMessageId);
 
         const embeds = botMessage.embeds;
         const embed = embeds && embeds.length > 0 ? embeds[0] : null;
@@ -265,17 +238,39 @@ export class MessageBasedMailboxManager extends MailboxManager {
                 embeds
             });
         }
-        this.updateThread(ticket);
+        await this.updateThread(ticket);
 
         this.emit(MessageBasedMailboxManagerEvents.ticketForceClose, ticket, user);
         this.closeTicket(ticket.id);
     }
 
     private async updateThread(ticket: Ticket): Promise<void> {
-        if (ticket.channelId) {
-            const thread = await this.client.channels.fetch(ticket.channelId) as ThreadChannel;
+        if (ticket.threadId) {
+            const thread = await this.client.channels.fetch(ticket.threadId) as ThreadChannel;
             await thread.setName(`${this.options.closedChannelPrefix ?? ''}${thread.name}`);
             await thread.setArchived(true);
         }
+    }
+
+    private async getChannel(ticket: Ticket): Promise<PartialTextBasedChannelFields> {
+        const guildChannel = typeof this.options.mailboxChannel === 'string'
+            ? await this.client.channels.fetch(this.options.mailboxChannel) as BaseGuildTextChannel
+            : this.options.mailboxChannel;
+        let thread: ThreadChannel | null = null;
+        if (!ticket.threadId && this.options.threadOptions && guildChannel.type !== Constants.ChannelTypes[Constants.ChannelTypes.GUILD_VOICE]) {
+            const startMessage = await guildChannel.send(this.options.threadOptions.startMessage(ticket));
+            thread = await (guildChannel as BaseGuildTextChannel).threads.create({
+                name: this.options.threadOptions.name(ticket),
+                autoArchiveDuration: 'MAX',
+                startMessage,
+                type: Constants.ChannelTypes[Constants.ChannelTypes.GUILD_PUBLIC_THREAD] as AllowedThreadTypeForTextChannel,
+            });
+            ticket.setChannel(thread.id);
+            this.emit(MessageBasedMailboxManagerEvents.threadCreate, ticket, thread);
+        } else if (ticket.threadId) {
+            thread = await (guildChannel as BaseGuildTextChannel).threads.fetch(ticket.threadId);
+        }
+
+        return thread ?? guildChannel;
     }
 }

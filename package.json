@@ -7,7 +7,8 @@
     "build": "npx tsc",
     "format": "npx prettier --write \"src/**/*.ts\" \"src/**/*.js\" \"example/**/*.ts\" \"example/**/*.js\" ",
     "lint": "npx tslint -p tsconfig.json",
-    "example": "yarn build & node ./example/index.js"
+    "example": "yarn build & node ./example/index.js",
+    "example:interaction": "yarn build & node ./example/index-interaction.js"
   },
   "repository": "git://github.com/hunteroi/discord-mailbox.git",
   "keywords": [

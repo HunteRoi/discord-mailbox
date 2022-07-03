@@ -1,4 +1,3 @@
-const noUserHasOpenedTicketWithId = 'Provided ticket ID does not exist for any user';
 const noOpenedTicketWithId = 'Provided ticket ID does not exist for any user';
 const tooMuchTicketsOpened = 'Too much tickets for this user';
 const messageHasNoTicket = 'No ticket related to this message';
@@ -10,7 +9,6 @@ const notForceCloseEmoji = 'Reaction emoji is not for force close';
 const senderNamesAppear = 'Sender names appear although the options is disabled';
 
 export default {
-    noUserHasOpenedTicketWithId,
     noOpenedTicketWithId,
     tooMuchTicketsOpened,
     messageHasNoTicket,

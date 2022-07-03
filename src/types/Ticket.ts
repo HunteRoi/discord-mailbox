@@ -21,7 +21,7 @@ export class Ticket {
         return this.#lastMessage;
     }
 
-    get channelId(): Snowflake | null {
+    get threadId(): Snowflake | null {
         return this.#channelId;
     }
 
