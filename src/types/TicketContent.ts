@@ -21,7 +21,7 @@ export type TicketContent = Pick<
 export function createTicketContent(content: string, author: User, createdAt: Date, createdTimestamp: number, channelId: Snowflake | null = null, channel: TextBasedChannel | null = null, attachments: Collection<string, MessageAttachment> = new Collection()): TicketContent {
     return {
         content,
-        cleanContent: content,
+        cleanContent: content.trim(),
         author,
         createdAt,
         createdTimestamp,

@@ -1,8 +1,8 @@
-import { AllowedThreadTypeForTextChannel, BaseGuildTextChannel, ButtonInteraction, Client, Constants, GuildTextBasedChannel, Interaction, MessageActionRow, MessageButton, MessageEmbed, MessageOptions, Modal, ModalActionRowComponent, ModalSubmitInteraction, PartialTextBasedChannelFields, TextInputComponent, ThreadChannel } from "discord.js";
+import { MessageSelectMenu, AllowedThreadTypeForTextChannel, BaseGuildTextChannel, ButtonInteraction, Client, Constants, GuildTextBasedChannel, Interaction, MessageActionRow, MessageButton, MessageEmbed, MessageOptions, Modal, ModalActionRowComponent, ModalSubmitInteraction, PartialTextBasedChannelFields, TextInputComponent, ThreadChannel, User } from "discord.js";
 import ErrorMessages from "./ErrorMessages";
 
 import { MailboxManager } from "./MailboxManager";
-import { MailboxManagerEvents, MessageBasedMailboxManagerEvents } from "./MailboxManagerEvents";
+import { MailboxManagerEvents } from "./MailboxManagerEvents";
 import { createTicketContentFromInteraction, InteractionBasedMailboxManagerOptions, Ticket, UserTickets } from "./types";
 import { arrowDown } from "./utils/constants";
 import { isNullOrWhiteSpaces } from "./utils/StringUtils";
@@ -19,47 +19,57 @@ export class InteractionBasedMailboxManager extends MailboxManager {
 
         this.client.on(Constants.Events.INTERACTION_CREATE, async (interaction: Interaction) => {
             try {
-                if (interaction.isCommand() && interaction.commandName === this.options.openTicketCommandName) {
-                    const button = new MessageButton({ ...this.options.startButtonOptions, customId: this.createTicketId });
-                    await interaction.reply({
-                        components: [
-                            new MessageActionRow().addComponents(button)
-                        ]
-                    });
-                }
-                else if (interaction.isButton()) {
+                if (interaction.isButton()) {
                     if (interaction.customId === this.createTicketId) {
-                        this.onCreateButtonInteraction(interaction);
-                    } else if (interaction.customId.includes(this.replyTicketIdPrefix)) {
-                        this.onReplyButtonInteraction(interaction);
-                    } else if (interaction.customId.includes(this.forceCloseTicketIdPrefix)) {
-                        this.onForceCloseButtonInteraction(interaction);
+                        await this.onCreateButtonInteraction(interaction);
+                    } else if (interaction.customId.startsWith(this.replyTicketIdPrefix)) {
+                        await this.onReplyButtonInteraction(interaction);
+                    } else if (interaction.customId.startsWith(this.forceCloseTicketIdPrefix)) {
+                        await this.onForceCloseButtonInteraction(interaction);
                     }
                 }
                 else if (interaction.isModalSubmit()) {
-                    if (interaction.customId.includes(this.createTicketId)) {
-                        this.onNewTicketSubmitInteraction(interaction);
+                    if (interaction.customId === this.createTicketId) {
+                        await this.onNewTicketSubmitInteraction(interaction);
                     }
-                    else if (interaction.customId.includes(this.replyTicketIdPrefix)) {
-                        this.onReplySubmitInteraction(interaction);
+                    else if (interaction.customId.startsWith(this.replyTicketIdPrefix)) {
+                        await this.onReplySubmitInteraction(interaction);
                     }
                 }
             } catch (error) {
                 console.error(error);
+                if ((interaction.isMessageComponent() || interaction.isModalSubmit()) && !interaction.replied) {
+                    if (interaction.deferred) await interaction.editReply('Action not possible');
+                    else await interaction.reply('Action not possible');
+                }
             }
         });
-        this.on(MailboxManagerEvents.ticketLog, (ticket: Ticket) => this.handleLog(ticket));
+        this.on(MailboxManagerEvents.ticketLog, async (ticket: Ticket) => {
+            try {
+                await this.handleLog(ticket);
+            } catch (error) {
+                console.error(error);
+            }
+        });
     }
 
     checkTickets(): void {
-        this.usersTickets.each((ut: UserTickets) => {
-            ut.each((ticket: Ticket) => {
+        this.usersTickets
+            .flatMap((ut: UserTickets) => ut)
+            .each(async (ticket: Ticket) => {
                 if (ticket.isOutdated(this.options.closeTicketAfterInMilliseconds)) {
                     this.updateThread(ticket);
-
                     this.closeTicket(ticket.id);
                 }
             });
+    }
+
+    async sendCreateTicketButton(user: User): Promise<void> {
+        const button = new MessageButton({ ...this.options.createButtonOptions, customId: this.createTicketId });
+        await user.send({
+            components: [
+                new MessageActionRow().addComponents(button)
+            ]
         });
     }
 
@@ -97,49 +107,44 @@ export class InteractionBasedMailboxManager extends MailboxManager {
             const thread = await this.client.channels.fetch(ticket.threadId) as ThreadChannel;
             await thread.send(logMessage);
             await this.updateThread(ticket);
-        } else {
-            const logChannel = typeof this.options.loggingOptions.channel === 'string'
-                ? await this.client.channels.fetch(
-                    this.options.loggingOptions.channel
-                ) as GuildTextBasedChannel
-                : this.options.loggingOptions.channel;
-            await logChannel.send(logMessage);
         }
+
+        const logChannel = typeof this.options.loggingOptions.channel === 'string'
+            ? await this.client.channels.fetch(
+                this.options.loggingOptions.channel
+            ) as GuildTextBasedChannel
+            : this.options.loggingOptions.channel;
+        await logChannel.send(logMessage);
     }
 
     private async onCreateButtonInteraction(interaction: ButtonInteraction): Promise<void> {
-        await interaction.deferReply();
-
         const modal = this.generateModal(interaction.customId);
         await interaction.showModal(modal);
-
-        await interaction.editReply(this.options.interactionReply);
     }
 
     private async onReplyButtonInteraction(interaction: ButtonInteraction): Promise<void> {
-        await interaction.deferReply();
-
         const ticketId = interaction.customId.replace(this.replyTicketIdPrefix, '');
         const ticket = this.getTicketById(ticketId);
         const modal = this.generateModal(interaction.customId, ticket);
         await interaction.showModal(modal);
-
-        await interaction.editReply(this.options.interactionReply);
     }
 
     private async onForceCloseButtonInteraction(interaction: ButtonInteraction): Promise<void> {
+        await interaction.deferReply();
+
         const ticketId = interaction.customId.replace(this.forceCloseTicketIdPrefix, '');
         const ticket = this.getTicketById(ticketId);
 
-        await this.updateThread(ticket);
-
-        this.emit(MessageBasedMailboxManagerEvents.ticketForceClose, ticket, interaction.user);
+        this.emit(MailboxManagerEvents.ticketForceClose, ticket, interaction.user);
         this.closeTicket(ticket.id);
 
-        await interaction.reply(this.options.interactionReply);
+        await interaction.editReply(this.options.interactionReply);
+        await this.updateThread(ticket);
     }
 
     private async onNewTicketSubmitInteraction(interaction: ModalSubmitInteraction): Promise<void> {
+        await interaction.deferReply();
+
         const ticketContent = createTicketContentFromInteraction(interaction);
         const ticket = this.createTicket(ticketContent);
 
@@ -147,10 +152,12 @@ export class InteractionBasedMailboxManager extends MailboxManager {
         const ticketMessage = this.generateMessageFromTicket(ticket);
         await channel.send(ticketMessage);
 
-        await interaction.reply(this.options.interactionReply);
+        await interaction.editReply(this.options.interactionReply);
     }
 
     private async onReplySubmitInteraction(interaction: ModalSubmitInteraction): Promise<void> {
+        await interaction.deferReply();
+
         const ticketContent = createTicketContentFromInteraction(interaction);
         const ticketId = interaction.customId.replace(this.replyTicketIdPrefix, '');
         const ticket = this.getTicketById(ticketId);
@@ -162,14 +169,17 @@ export class InteractionBasedMailboxManager extends MailboxManager {
         const channel = await this.getChannel(ticket);
         const answerMessage = await (isSentToAdmin ? channel : ticket.createdBy).send(ticketMessage);
 
-        await interaction.reply(this.options.interactionReply);
-        this.emit(MessageBasedMailboxManagerEvents.replySent, interaction, answerMessage);
+        await interaction.editReply(this.options.interactionReply);
+        this.emit(MailboxManagerEvents.replySent, interaction, answerMessage);
     }
 
     private async getChannel(ticket: Ticket): Promise<PartialTextBasedChannelFields> {
-        const guildChannel = typeof this.options.mailboxChannel === 'string'
-            ? await this.client.channels.fetch(this.options.mailboxChannel) as BaseGuildTextChannel
-            : this.options.mailboxChannel;
+        const firstMailbox = this.options.mailboxChannel;
+        if (!firstMailbox) throw new Error(ErrorMessages.noMailboxRegistered);
+
+        const guildChannel = typeof firstMailbox === 'string'
+            ? await this.client.channels.fetch(firstMailbox) as BaseGuildTextChannel
+            : firstMailbox;
         let thread: ThreadChannel | null = null;
         if (!ticket.threadId && this.options.threadOptions && guildChannel.type !== Constants.ChannelTypes[Constants.ChannelTypes.GUILD_VOICE]) {
             const startMessage = await guildChannel.send(this.options.threadOptions.startMessage(ticket));
@@ -180,7 +190,7 @@ export class InteractionBasedMailboxManager extends MailboxManager {
                 type: Constants.ChannelTypes[Constants.ChannelTypes.GUILD_PUBLIC_THREAD] as AllowedThreadTypeForTextChannel,
             });
             ticket.setChannel(thread.id);
-            this.emit(MessageBasedMailboxManagerEvents.threadCreate, ticket, thread);
+            this.emit(MailboxManagerEvents.threadCreate, ticket, thread);
         } else if (ticket.threadId) {
             thread = await (guildChannel as BaseGuildTextChannel).threads.fetch(ticket.threadId);
         }

@@ -29,12 +29,12 @@ export class MailboxManager extends EventEmitter implements IMailboxManager {
     }
 
     checkTickets(): void {
-        this.usersTickets.each((ut: UserTickets) => {
-            ut.each((ticket: Ticket) => {
+        this.usersTickets
+            .flatMap((ut: UserTickets) => ut)
+            .each(async (ticket: Ticket) => {
                 if (ticket.isOutdated(this.options.closeTicketAfterInMilliseconds))
                     this.closeTicket(ticket.id);
             });
-        });
     }
 
     createTicket(content: TicketContent): Ticket {

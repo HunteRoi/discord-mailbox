@@ -1,6 +1,6 @@
 const { Client, Intents, Constants } = require('discord.js');
 
-const { MessageBasedMailboxManager, MailboxManagerEvents, MessageBasedMailboxManagerEvents } = require('../lib');
+const { MessageBasedMailboxManager, MailboxManagerEvents } = require('../lib');
 
 const client = new Client({
   intents: [
@@ -77,10 +77,10 @@ manager.on(MailboxManagerEvents.ticketClose, async (ticket, userTickets) => {
   const nbTickets = userTickets.length;
   await user.send(`The ticket ${ticket.id} has been closed due to inactivity or manually by the receiver or yourself.\nYou now have ${nbTickets} opened tickets left.`);
 });
-manager.on(MessageBasedMailboxManagerEvents.ticketForceClose, (ticket, user) =>
+manager.on(MailboxManagerEvents.ticketForceClose, (ticket, user) =>
   console.log(`${user.username} forced closed ticket ${ticket.id}.`)
 );
-manager.on(MessageBasedMailboxManagerEvents.threadCreate, (ticket, thread) => {
+manager.on(MailboxManagerEvents.threadCreate, (ticket, thread) => {
   console.log(`${ticket.id} is happening in ${thread.name}`);
 });
 

@@ -1,4 +1,4 @@
-import { MessageOptions, TextChannel, VoiceChannel, Snowflake, EmojiIdentifierResolvable, MessageEmbedOptions, GuildTextBasedChannel, InteractionButtonOptions, TextInputComponentOptions } from "discord.js";
+import { MessageOptions, TextChannel, VoiceChannel, Snowflake, EmojiIdentifierResolvable, MessageEmbedOptions, GuildTextBasedChannel, InteractionButtonOptions, TextInputComponentOptions, Collection } from "discord.js";
 import { DateTime } from "luxon";
 
 import { Ticket } from "./Ticket";
@@ -24,10 +24,9 @@ export type MessageBasedMailboxManagerOptions = {
 } & MailboxManagerOptions;
 
 export type InteractionBasedMailboxManagerOptions = {
-    openTicketCommandName: string;
-    startButtonOptions: Exclude<InteractionButtonOptions, 'customId'>
-    replyButtonOptions: Exclude<InteractionButtonOptions, 'customId'>,
-    forceCloseButtonOptions: Exclude<InteractionButtonOptions, 'emoji' | 'customId'>,
+    createButtonOptions: Exclude<InteractionButtonOptions, 'disabled' | 'customId'>
+    replyButtonOptions: Exclude<InteractionButtonOptions, 'disabled' | 'customId'>,
+    forceCloseButtonOptions: Exclude<InteractionButtonOptions, 'disabled' | 'emoji' | 'customId'>,
     modalOptions: ModalOptions;
     interactionReply: string;
 } & MessageBasedMailboxManagerOptions;

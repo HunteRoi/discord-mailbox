@@ -83,6 +83,11 @@ The `send` property of the embed options has been removed. Once an EmbedOptions 
 The `deleteReplies` property of the options has been removed. It actually is misleading to end users (staff members responding to messages).
 If you want to still use it, you can perform the same action through the `replySent` event.
 
+## replyDelete event disappears
+
+This event was initially created to let the user know a replt has been deleted but the deletion behaviour has ben removed so thus event has no purpose anymore.
+It has thus been removed.
+
 ## options#sendToRecipient Change
 
 The `sendToRecipient` property of the options has been deprecated and changed to optional.

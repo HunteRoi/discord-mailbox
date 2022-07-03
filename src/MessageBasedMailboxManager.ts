@@ -1,7 +1,7 @@
 import { Client, Constants, BaseGuildTextChannel, Message, MessageReaction, PartialMessage, PartialMessageReaction, PartialUser, ThreadChannel, User, AllowedThreadTypeForTextChannel, MessageEmbed, MessageOptions, Snowflake, GuildTextBasedChannel, PartialTextBasedChannelFields, TextBasedChannelFields } from "discord.js";
 
 import { MailboxManager } from "./MailboxManager";
-import { MailboxManagerEvents, MessageBasedMailboxManagerEvents } from "./MailboxManagerEvents";
+import { MailboxManagerEvents } from "./MailboxManagerEvents";
 import { MessageBasedMailboxManagerOptions, Ticket, TicketContent, UserTickets } from "./types";
 import { isNullOrWhiteSpaces } from "./utils/StringUtils";
 import { arrowDown, arrowUp } from "./utils/constants";
@@ -55,9 +55,9 @@ export class MessageBasedMailboxManager extends MailboxManager {
             }
         });
 
-        this.on(MailboxManagerEvents.ticketLog, (ticket: Ticket) => {
+        this.on(MailboxManagerEvents.ticketLog, async (ticket: Ticket) => {
             try {
-                this.handleLog(ticket);
+                await this.handleLog(ticket);
             } catch (error) {
                 console.error(error);
             }
@@ -65,15 +65,15 @@ export class MessageBasedMailboxManager extends MailboxManager {
     }
 
     checkTickets(): void {
-        this.usersTickets.each((userTickets: UserTickets) => {
-            userTickets.each(async (ticket: Ticket) => {
+        this.usersTickets
+            .flatMap((ut: UserTickets) => ut)
+            .each(async (ticket: Ticket) => {
                 if (ticket.isOutdated(this.options.closeTicketAfterInMilliseconds)) {
                     this.updateThread(ticket);
 
                     this.closeTicket(ticket.id);
                 }
             });
-        });
     }
 
     private async handleLog(ticket: Ticket): Promise<void> {
@@ -110,14 +110,14 @@ export class MessageBasedMailboxManager extends MailboxManager {
             const thread = await this.client.channels.fetch(ticket.threadId) as ThreadChannel;
             await thread.send(logMessage);
             await this.updateThread(ticket);
-        } else {
-            const logChannel = typeof this.options.loggingOptions.channel === 'string'
-                ? await this.client.channels.fetch(
-                    this.options.loggingOptions.channel
-                ) as GuildTextBasedChannel
-                : this.options.loggingOptions.channel;
-            await logChannel.send(logMessage);
         }
+
+        const logChannel = typeof this.options.loggingOptions.channel === 'string'
+            ? await this.client.channels.fetch(
+                this.options.loggingOptions.channel
+            ) as GuildTextBasedChannel
+            : this.options.loggingOptions.channel;
+        await logChannel.send(logMessage);
     }
 
     private async onDMCreate(message: Message): Promise<void> {
@@ -170,7 +170,7 @@ export class MessageBasedMailboxManager extends MailboxManager {
             await answerMessage.react(this.options.forceCloseEmoji);
         }
 
-        this.emit(MessageBasedMailboxManagerEvents.replySent, message, answerMessage);
+        this.emit(MailboxManagerEvents.replySent, message, answerMessage);
     }
 
     private extractMessageId(message: Message<boolean> | PartialMessage): Snowflake {
@@ -240,7 +240,7 @@ export class MessageBasedMailboxManager extends MailboxManager {
         }
         await this.updateThread(ticket);
 
-        this.emit(MessageBasedMailboxManagerEvents.ticketForceClose, ticket, user);
+        this.emit(MailboxManagerEvents.ticketForceClose, ticket, user);
         this.closeTicket(ticket.id);
     }
 
@@ -253,9 +253,12 @@ export class MessageBasedMailboxManager extends MailboxManager {
     }
 
     private async getChannel(ticket: Ticket): Promise<PartialTextBasedChannelFields> {
-        const guildChannel = typeof this.options.mailboxChannel === 'string'
-            ? await this.client.channels.fetch(this.options.mailboxChannel) as BaseGuildTextChannel
-            : this.options.mailboxChannel;
+        const firstMailbox = this.options.mailboxChannel;
+        if (!firstMailbox) throw new Error(ErrorMessages.noMailboxRegistered);
+
+        const guildChannel = typeof firstMailbox === 'string'
+            ? await this.client.channels.fetch(firstMailbox) as BaseGuildTextChannel
+            : firstMailbox;
         let thread: ThreadChannel | null = null;
         if (!ticket.threadId && this.options.threadOptions && guildChannel.type !== Constants.ChannelTypes[Constants.ChannelTypes.GUILD_VOICE]) {
             const startMessage = await guildChannel.send(this.options.threadOptions.startMessage(ticket));
@@ -266,7 +269,7 @@ export class MessageBasedMailboxManager extends MailboxManager {
                 type: Constants.ChannelTypes[Constants.ChannelTypes.GUILD_PUBLIC_THREAD] as AllowedThreadTypeForTextChannel,
             });
             ticket.setChannel(thread.id);
-            this.emit(MessageBasedMailboxManagerEvents.threadCreate, ticket, thread);
+            this.emit(MailboxManagerEvents.threadCreate, ticket, thread);
         } else if (ticket.threadId) {
             thread = await (guildChannel as BaseGuildTextChannel).threads.fetch(ticket.threadId);
         }
