@@ -51,7 +51,7 @@ client.on('ready', () => console.log('Connected!'));
 client.on('messageCreate', (message) => {
   if (message.content === 'show me the tickets collection') {
     message.reply(
-      `\`\`\`js\n${JSON.stringify(manager.userTickets, null, 2)}\n\`\`\``
+      `\`\`\`js\n${JSON.stringify(manager.usersTickets, null, 2)}\n\`\`\``
     );
   }
 });

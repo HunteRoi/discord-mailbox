@@ -28,7 +28,7 @@ export class MailboxManager extends EventEmitter implements IMailboxManager {
         });
     }
 
-    checkTickets() {
+    checkTickets(): void {
         this.usersTickets.each((userTickets: UserTickets) => {
             userTickets.each((ticket: Ticket) => {
                 if (ticket.isOutdated(this.options.closeTicketAfterInMilliseconds)) {

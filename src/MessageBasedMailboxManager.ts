@@ -64,7 +64,7 @@ export class MessageBasedMailboxManager extends MailboxManager {
         });
     }
 
-    checkTickets() {
+    checkTickets(): void {
         this.usersTickets.each((userTickets: UserTickets) => {
             userTickets.each(async (ticket: Ticket) => {
                 if (ticket.isOutdated(this.options.closeTicketAfterInMilliseconds)) {
@@ -76,7 +76,7 @@ export class MessageBasedMailboxManager extends MailboxManager {
         });
     }
 
-    private async handleLog(ticket: Ticket) {
+    private async handleLog(ticket: Ticket): Promise<void> {
         if (!this.options.loggingOptions) return;
 
         const logs = ticket.messages.map(this.options.loggingOptions.generateLogEntry);
@@ -120,7 +120,7 @@ export class MessageBasedMailboxManager extends MailboxManager {
         }
     }
 
-    private async onDMCreate(message: Message) {
+    private async onDMCreate(message: Message): Promise<void> {
         let ticket: Ticket | undefined;
 
         if (message.reference && message.reference.messageId) {
@@ -166,7 +166,7 @@ export class MessageBasedMailboxManager extends MailboxManager {
         }
     }
 
-    private async onGuildReply(message: Message) {
+    private async onGuildReply(message: Message): Promise<void> {
         if (!message.reference || !message.reference.messageId) throw new Error(ErrorMessages.messageIsNotReply);
         const previousMessage = await message.channel.messages.fetch(message.reference.messageId);
         const lastMessageId = this.extractMessageId(previousMessage);
@@ -242,7 +242,7 @@ export class MessageBasedMailboxManager extends MailboxManager {
             : `${header}\n\n​${description}\n\n​${footer}`;
     }
 
-    private async onReactionAdd(reaction: MessageReaction, user: User) {
+    private async onReactionAdd(reaction: MessageReaction, user: User): Promise<void> {
         if (reaction.emoji.name !== this.options.forceCloseEmoji) {
             throw new Error(ErrorMessages.notForceCloseEmoji);
         }
@@ -271,7 +271,7 @@ export class MessageBasedMailboxManager extends MailboxManager {
         this.closeTicket(ticket.id);
     }
 
-    private async updateThread(ticket: Ticket) {
+    private async updateThread(ticket: Ticket): Promise<void> {
         if (ticket.channelId) {
             const thread = await this.client.channels.fetch(ticket.channelId) as ThreadChannel;
             await thread.setName(`${this.options.closedChannelPrefix ?? ''}${thread.name}`);
