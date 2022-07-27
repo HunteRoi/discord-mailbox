@@ -352,10 +352,16 @@ export class MessageBasedMailboxManager extends MailboxManager {
       const thread = (await this.client.channels.fetch(
         ticket.threadId
       )) as ThreadChannel;
-      await thread.setName(
-        `${this.options.closedChannelPrefix ?? ''}${thread.name}`
-      );
-      await thread.setArchived(true);
+
+      if (
+        this.options.closedChannelPrefix &&
+        !thread.name.startsWith(this.options.closedChannelPrefix)
+      ) {
+        await thread.setName(
+          `${this.options.closedChannelPrefix ?? ''}${thread.name}`
+        );
+      }
+      if (!thread.archived) await thread.setArchived(true);
     }
   }
 
