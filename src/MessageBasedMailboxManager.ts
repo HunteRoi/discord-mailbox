@@ -84,7 +84,7 @@ export class MessageBasedMailboxManager extends MailboxManager {
               throw new Error("Unsupported type of message's channel.");
           }
         } catch (error) {
-          console.error(error);
+          console.debug(error);
 
           const err = error as Error;
           if (
@@ -112,7 +112,7 @@ export class MessageBasedMailboxManager extends MailboxManager {
 
           await this.onReactionAdd(msgReaction, usr);
         } catch (error) {
-          console.error(error);
+          console.debug(error);
         }
       }
     );
@@ -121,7 +121,7 @@ export class MessageBasedMailboxManager extends MailboxManager {
       try {
         await this.handleLog(ticket);
       } catch (error) {
-        console.error(error);
+        console.debug(error);
       }
     });
   }
@@ -157,23 +157,23 @@ export class MessageBasedMailboxManager extends MailboxManager {
     const logMessage =
       typeof content === 'string'
         ? ({
-            content,
-            files: [
-              {
-                attachment: Buffer.from(logs.join('\n')),
-                name: this.options.loggingOptions.generateFilename(ticket),
-              },
-            ],
-          } as MessageOptions)
+          content,
+          files: [
+            {
+              attachment: Buffer.from(logs.join('\n')),
+              name: this.options.loggingOptions.generateFilename(ticket),
+            },
+          ],
+        } as MessageOptions)
         : {
-            ...content,
-            files: [
-              {
-                attachment: Buffer.from(logs.join('\n')),
-                name: this.options.loggingOptions.generateFilename(ticket),
-              },
-            ],
-          };
+          ...content,
+          files: [
+            {
+              attachment: Buffer.from(logs.join('\n')),
+              name: this.options.loggingOptions.generateFilename(ticket),
+            },
+          ],
+        };
 
     if (this.options.loggingOptions.sendToRecipient) {
       await ticket.createdBy.send(logMessage);
@@ -190,8 +190,8 @@ export class MessageBasedMailboxManager extends MailboxManager {
     const logChannel =
       typeof this.options.loggingOptions.channel === 'string'
         ? ((await this.client.channels.fetch(
-            this.options.loggingOptions.channel
-          )) as GuildTextBasedChannel)
+          this.options.loggingOptions.channel
+        )) as GuildTextBasedChannel)
         : this.options.loggingOptions.channel;
     await logChannel.send(logMessage);
   }
@@ -279,9 +279,9 @@ export class MessageBasedMailboxManager extends MailboxManager {
   private generateMessageFromTicket(ticket: Ticket): MessageOptions {
     const isSentToAdmin =
       ticket.lastMessage.channel?.type ===
-        Constants.ChannelTypes[Constants.ChannelTypes.DM] ||
+      Constants.ChannelTypes[Constants.ChannelTypes.DM] ||
       ticket.lastMessage.channel?.type ===
-        Constants.ChannelTypes[Constants.ChannelTypes.GROUP_DM];
+      Constants.ChannelTypes[Constants.ChannelTypes.GROUP_DM];
 
     const header = this.options.formatTitle(ticket);
     if (isNullOrWhiteSpaces(header) || !header.includes(ticket.id)) {
@@ -292,28 +292,27 @@ export class MessageBasedMailboxManager extends MailboxManager {
         ? `${ticket.lastMessage.author.username}:\n`
         : null;
     const suffix = `\n\n**${this.options.replyMessage}**`;
-    const description = `${!isNullOrWhiteSpaces(prefix) ? prefix : ''}${
-      ticket.lastMessage.cleanContent
-    }${!isNullOrWhiteSpaces(suffix) ? suffix : ''}`;
+    const description = `${!isNullOrWhiteSpaces(prefix) ? prefix : ''}${ticket.lastMessage.cleanContent
+      }${!isNullOrWhiteSpaces(suffix) ? suffix : ''}`;
 
     const footer = `ID: ${ticket.lastMessage.id}`;
 
     return this.options.embedOptions
       ? ({
-          embeds: [
-            new MessageEmbed(this.options.embedOptions)
-              .setAuthor({
-                name: header,
-                iconURL: isSentToAdmin ? arrowDown : '',
-              })
-              .setDescription(description)
-              .setFooter({ text: footer })
-              .setTimestamp(),
-          ],
-        } as MessageOptions)
+        embeds: [
+          new MessageEmbed(this.options.embedOptions)
+            .setAuthor({
+              name: header,
+              iconURL: isSentToAdmin ? arrowDown : '',
+            })
+            .setDescription(description)
+            .setFooter({ text: footer })
+            .setTimestamp(),
+        ],
+      } as MessageOptions)
       : {
-          content: `${header}\n\n​${description}\n\n​${footer}`,
-        };
+        content: `${header}\n\n​${description}\n\n​${footer}`,
+      };
   }
 
   private async onReactionAdd(
@@ -369,15 +368,15 @@ export class MessageBasedMailboxManager extends MailboxManager {
     const guildChannel =
       typeof firstMailbox === 'string'
         ? ((await this.client.channels.fetch(
-            firstMailbox
-          )) as BaseGuildTextChannel)
+          firstMailbox
+        )) as BaseGuildTextChannel)
         : firstMailbox;
     let thread: ThreadChannel | null = null;
     if (
       !ticket.threadId &&
       this.options.threadOptions &&
       guildChannel.type !==
-        Constants.ChannelTypes[Constants.ChannelTypes.GUILD_VOICE]
+      Constants.ChannelTypes[Constants.ChannelTypes.GUILD_VOICE]
     ) {
       const startMessage = await guildChannel.send(
         this.options.threadOptions.startMessage(ticket)

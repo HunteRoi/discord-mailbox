@@ -86,7 +86,7 @@ export class InteractionBasedMailboxManager extends MailboxManager {
             }
           }
         } catch (error) {
-          console.error(error);
+          console.debug(error);
           if (
             (interaction.isMessageComponent() || interaction.isModalSubmit()) &&
             !interaction.replied
@@ -103,7 +103,7 @@ export class InteractionBasedMailboxManager extends MailboxManager {
       try {
         await this.handleLog(ticket);
       } catch (error) {
-        console.error(error);
+        console.debug(error);
       }
     });
   }
@@ -155,23 +155,23 @@ export class InteractionBasedMailboxManager extends MailboxManager {
     const logMessage =
       typeof content === 'string'
         ? ({
-            content,
-            files: [
-              {
-                attachment: Buffer.from(logs.join('\n')),
-                name: this.options.loggingOptions.generateFilename(ticket),
-              },
-            ],
-          } as MessageOptions)
+          content,
+          files: [
+            {
+              attachment: Buffer.from(logs.join('\n')),
+              name: this.options.loggingOptions.generateFilename(ticket),
+            },
+          ],
+        } as MessageOptions)
         : {
-            ...content,
-            files: [
-              {
-                attachment: Buffer.from(logs.join('\n')),
-                name: this.options.loggingOptions.generateFilename(ticket),
-              },
-            ],
-          };
+          ...content,
+          files: [
+            {
+              attachment: Buffer.from(logs.join('\n')),
+              name: this.options.loggingOptions.generateFilename(ticket),
+            },
+          ],
+        };
 
     if (this.options.loggingOptions.sendToRecipient) {
       await ticket.createdBy.send(logMessage);
@@ -188,8 +188,8 @@ export class InteractionBasedMailboxManager extends MailboxManager {
     const logChannel =
       typeof this.options.loggingOptions.channel === 'string'
         ? ((await this.client.channels.fetch(
-            this.options.loggingOptions.channel
-          )) as GuildTextBasedChannel)
+          this.options.loggingOptions.channel
+        )) as GuildTextBasedChannel)
         : this.options.loggingOptions.channel;
     await logChannel.send(logMessage);
   }
@@ -283,15 +283,15 @@ export class InteractionBasedMailboxManager extends MailboxManager {
     const guildChannel =
       typeof firstMailbox === 'string'
         ? ((await this.client.channels.fetch(
-            firstMailbox
-          )) as BaseGuildTextChannel)
+          firstMailbox
+        )) as BaseGuildTextChannel)
         : firstMailbox;
     let thread: ThreadChannel | null = null;
     if (
       !ticket.threadId &&
       this.options.threadOptions &&
       guildChannel.type !==
-        Constants.ChannelTypes[Constants.ChannelTypes.GUILD_VOICE]
+      Constants.ChannelTypes[Constants.ChannelTypes.GUILD_VOICE]
     ) {
       const startMessage = await guildChannel.send(
         this.options.threadOptions.startMessage(ticket)
@@ -318,9 +318,9 @@ export class InteractionBasedMailboxManager extends MailboxManager {
   private generateMessageFromTicket(ticket: Ticket): MessageOptions {
     const isSentToAdmin =
       ticket.lastMessage.channel?.type ===
-        Constants.ChannelTypes[Constants.ChannelTypes.DM] ||
+      Constants.ChannelTypes[Constants.ChannelTypes.DM] ||
       ticket.lastMessage.channel?.type ===
-        Constants.ChannelTypes[Constants.ChannelTypes.GROUP_DM];
+      Constants.ChannelTypes[Constants.ChannelTypes.GROUP_DM];
 
     const header = this.options.formatTitle(ticket);
     if (isNullOrWhiteSpaces(header) || !header.includes(ticket.id)) {
@@ -331,9 +331,8 @@ export class InteractionBasedMailboxManager extends MailboxManager {
         ? `${ticket.lastMessage.author.username}:\n`
         : null;
     const suffix = `\n\n**${this.options.replyMessage}**`;
-    const description = `${!isNullOrWhiteSpaces(prefix) ? prefix : ''}${
-      ticket.lastMessage.cleanContent
-    }${!isNullOrWhiteSpaces(suffix) ? suffix : ''}`;
+    const description = `${!isNullOrWhiteSpaces(prefix) ? prefix : ''}${ticket.lastMessage.cleanContent
+      }${!isNullOrWhiteSpaces(suffix) ? suffix : ''}`;
 
     const footer = `ID: ${ticket.lastMessage.id}`;
 
@@ -353,22 +352,22 @@ export class InteractionBasedMailboxManager extends MailboxManager {
 
     return this.options.embedOptions
       ? ({
-          embeds: [
-            new MessageEmbed(this.options.embedOptions)
-              .setAuthor({
-                name: header,
-                iconURL: isSentToAdmin ? arrowDown : '',
-              })
-              .setDescription(description)
-              .setFooter({ text: footer })
-              .setTimestamp(),
-          ],
-          components: [row],
-        } as MessageOptions)
+        embeds: [
+          new MessageEmbed(this.options.embedOptions)
+            .setAuthor({
+              name: header,
+              iconURL: isSentToAdmin ? arrowDown : '',
+            })
+            .setDescription(description)
+            .setFooter({ text: footer })
+            .setTimestamp(),
+        ],
+        components: [row],
+      } as MessageOptions)
       : {
-          content: `${header}\n\n​${description}\n\n​${footer}`,
-          components: [row],
-        };
+        content: `${header}\n\n​${description}\n\n​${footer}`,
+        components: [row],
+      };
   }
 
   private generateModal(customId: string, ticket?: Ticket): Modal {
