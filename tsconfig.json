@@ -1,12 +1,12 @@
 {
   "compilerOptions": {
-    "target": "es6",
+    "target": "es2020",
     "module": "commonjs",
     "declaration": true,
     "outDir": "./lib",
     "strict": true,
     "resolveJsonModule": true,
-    "strictNullChecks": false,
+    "strictNullChecks": true,
     "esModuleInterop": true
   },
   "include": ["src/**/*"]

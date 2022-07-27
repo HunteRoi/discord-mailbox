@@ -1,22 +1,19 @@
 const { Client, Intents, Constants } = require('discord.js');
 
-const { MessageBasedMailboxManager, MailboxManagerEvents } = require('../lib');
+const {
+  InteractionBasedMailboxManager,
+  MailboxManagerEvents,
+} = require('../lib');
 
 const client = new Client({
   intents: [
     Intents.FLAGS.GUILDS,
     Intents.FLAGS.GUILD_MESSAGES,
-    Intents.FLAGS.GUILD_MESSAGE_REACTIONS,
     Intents.FLAGS.DIRECT_MESSAGES,
-    Intents.FLAGS.DIRECT_MESSAGE_REACTIONS,
   ],
-  partials: [
-    Constants.PartialTypes.CHANNEL,
-    Constants.PartialTypes.MESSAGE,
-    Constants.PartialTypes.REACTION,
-  ],
+  partials: [Constants.PartialTypes.CHANNEL, Constants.PartialTypes.MESSAGE],
 });
-const manager = new MessageBasedMailboxManager(client, {
+const manager = new InteractionBasedMailboxManager(client, {
   mailboxChannel: 'TEXT_CHANNEL_ID',
   closeTicketAfterInMilliseconds: 60000, // in milliseconds
   maxOngoingTicketsPerUser: 3,
@@ -50,14 +47,35 @@ const manager = new MessageBasedMailboxManager(client, {
   closedChannelPrefix: '[Closed] ',
   tooMuchTickets:
     'You have too much tickets that are not closed! Please wait for your tickets to be closed before submitting new ones.',
+  createButtonOptions: {
+    label: 'CREATE TICKET',
+    emoji: '➕',
+    style: 'PRIMARY',
+  },
+  replyButtonOptions: {
+    label: 'REPLY',
+    emoji: '↩️',
+    style: 'PRIMARY',
+  },
+  forceCloseButtonOptions: {
+    label: 'CLOSE',
+    style: 'SECONDARY',
+  },
+  modalOptions: {
+    title: 'Create Ticket',
+    modalComponentsOptions: {
+      placeholder: 'Write down your message here',
+      label: 'Your message',
+      style: 'PARAGRAPH',
+    },
+  },
+  interactionReply: 'Your feedback has been received!',
 });
 
 client.on('ready', () => console.log('Connected!'));
-client.on('messageCreate', (message) => {
-  if (message.content === 'show me the tickets collection') {
-    message.reply(
-      `\`\`\`js\n${JSON.stringify(manager.usersTickets, null, 2)}\n\`\`\``
-    );
+client.on('messageCreate', async (message) => {
+  if (message.content === 'createTicket') {
+    await manager.sendCreateTicketButton(message.author);
   }
 });
 

@@ -1,18 +1,16 @@
-import { Ticket } from '.';
+import { MessageOptions } from 'discord.js';
+import { Ticket } from './Ticket';
 
-export interface ThreadOptions {
+export type ThreadOptions = {
   /**
-   * Allows to set the name of the thread. You can use whatever you need from the ticket object.
+   * A function to build the thread name based on the provided ticket.
    *
-   * @memberof ThreadOptions
    */
   name: (ticket: Ticket) => string;
 
   /**
-   * The message sent in the mailbox to create a thread.
+   * A function to create a start message for the thread.
    *
-   * @type {string}
-   * @memberof ThreadOptions
    */
-  startMessage: (ticket: Ticket) => string;
-}
+  startMessage: (ticket: Ticket) => string | MessageOptions;
+};

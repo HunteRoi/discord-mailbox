@@ -4,6 +4,8 @@
   "jsRules": {
     "no-unused-expression": true
   },
-  "rules": {},
+  "rules": {
+    "no-console": [false]
+  },
   "rulesDirectory": []
 }

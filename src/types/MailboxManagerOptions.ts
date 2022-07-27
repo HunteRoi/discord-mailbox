@@ -1,127 +1,32 @@
-import { EmojiResolvable, Snowflake } from 'discord.js';
-import { Moment } from 'moment';
+import { TextChannel, VoiceChannel, Snowflake } from 'discord.js';
+import { DateTime } from 'luxon';
 
-import { EmbedOptions } from './EmbedOptions';
-import { LogsOptions } from './LogsOptions';
-import { ThreadOptions } from './ThreadOptions';
-
-/**
- * The mailbox manager options.
- *
- * @export
- * @interface MailboxManagerOptions
- */
-export interface MailboxManagerOptions {
+export type MailboxManagerOptions = {
   /**
-   * A method to generate the message to return to the user when their ticket is closed.
+   * The mailbox channel in which the content is sent (or from which the thread are created).
    *
-   * @type {string}
+   * @type {(TextChannel | VoiceChannel | Snowflake)}
    */
-  ticketClose: (numberOfTickets: number) => string;
+  mailboxChannel: TextChannel | VoiceChannel | Snowflake;
 
   /**
-   * The message to return when a user has too much not-closed tickets and is trying to create a new one.
-   *
-   * @type {string}
-   */
-  tooMuchTickets: string;
-
-  /**
-   * The message to return when a ticket message contains @everyone or @here
-   *
-   * @type {string}
-   */
-  notAllowedToPing: string;
-
-  /**
-   * The text under each embed that says "reply to continue messaging with this ticket".
-   *
-   * @type {string}
-   */
-  replyMessage: string;
-
-  /**
-   * The text message sent to the user opening a new ticket.
-   *
-   * @type {string}
-   */
-  autoReplyMessage?: string;
-
-  /**
-   * The maximum of possibly not-closed tickets per user.
+   * The duration in milliseconds after a ticket's last activity before it gets closed.
    *
    * @type {number}
    */
-  maxOngoingTicketsPerUser: number;
+  closeTicketAfterInMilliseconds: number;
 
   /**
-   * The channel in which the tickets' messages are sent.
-   *
-   * @type {Snowflake}
-   */
-  mailboxChannel: Snowflake;
-
-  /**
-   * The thread options. If set, threads are used with the {@link mailboxChannel} as parent.
-   *
-   * @type {ThreadOptions}
-   */
-  threadOptions?: ThreadOptions;
-
-  /**
-   * Whether the replies in the mailbox channel should get deleted or not.
-   *
-   * @type {boolean}
-   */
-  deleteReplies?: boolean;
-
-  /**
-   * Seconds after which, if no interaction for a ticket, should it be closed.
+   * The maximum number of ongoing tickets per user
    *
    * @type {number}
    */
-  closeTicketAfter: number;
+  maxOnGoingTicketsPerUser: number;
 
   /**
-   * Format of the ticket title. The ticket id must be present in the returned string.
+   * The cron time for the background job in charge of checking the validity of all ongoing tickets.
    *
-   * @required
+   * @type {(string | Date | DateTime)}
    */
-  formatTitle: (ticketId: string) => string;
-
-  /**
-   * The scheduled time where all tickets are verified for time out.
-   *
-   * @type {(string | Date)}
-   * @see {cron} https://www.npmjs.com/package/cron
-   */
-  cronTime: string | Date | Moment;
-
-  /**
-   * The emoji added to mails to trigger the force close.
-   *
-   * @type {EmojiResolvable}
-   */
-  forceCloseEmoji?: EmojiResolvable;
-
-  /**
-   * The emoji to add as reaction to a ticket when a reply has been sent already.
-   *
-   * @type {EmojiResolvable}
-   */
-  replySentEmoji?: EmojiResolvable;
-
-  /**
-   * The logging options.
-   *
-   * @type {LogsOptions}
-   */
-  loggingOptions?: LogsOptions;
-
-  /**
-   * The embed options.
-   *
-   * @type {EmbedOptions}
-   */
-  embedOptions?: EmbedOptions;
-}
+  cronTime: string | Date | DateTime;
+};

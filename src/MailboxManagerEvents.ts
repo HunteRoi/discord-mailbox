@@ -5,18 +5,33 @@
  * @enum {string}
  */
 export enum MailboxManagerEvents {
+  /**
+   * Emitted when a ticket is created
+   */
   ticketCreate = 'ticketCreate',
+  /**
+   * Emitted when a ticket is updated
+   */
   ticketUpdate = 'ticketUpdate',
-  ticketLog = 'ticketLog',
+  /**
+   * Emitted when a ticket is closed
+   */
   ticketClose = 'ticketClose',
-  ticketForceClose = 'ticketForceClose',
-  ticketDelete = 'ticketDelete',
+  /**
+   * Emitted when a ticket is logged
+   */
+  ticketLog = 'ticketLog',
 
+  /**
+   * Emitted once a thread is created for a ticket
+   */
   threadCreate = 'threadCreate',
-  threadArchive = 'threadArchive',
-
+  /**
+   * Emitted once a reply is sent for a ticket.
+   */
   replySent = 'replySent',
-  replyDelete = 'replyDelete',
-
-  error = 'error',
+  /**
+   * Emitted once a ticket is force-closed.
+   */
+  ticketForceClose = 'ticketForceClose',
 }

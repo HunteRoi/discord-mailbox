@@ -1,273 +1,154 @@
-import { Client, Collection, Intents, Snowflake, Constants } from 'discord.js';
+import { Client, Collection } from 'discord.js';
 import { EventEmitter } from 'events';
 import { CronJob } from 'cron';
 
+import ErrorMessages from './ErrorMessages';
+import { MailboxManagerEvents } from './MailboxManagerEvents';
 import {
-  handleMessage,
-  handleReaction,
-  handleClosing,
-  handleLog,
-  handleOpening,
-} from './handlers';
-import { MailboxManagerOptions, Ticket } from './types';
-import { MailboxManagerEvents } from '.';
+  MailboxManagerOptions,
+  IMailboxManager,
+  Ticket,
+  TicketContent,
+  UserId,
+  UserTickets,
+} from './types';
 
 /**
- * The manager of the mailbox feature
+ * The base mailbox manager, handling tickets.
  *
  * @export
  * @class MailboxManager
  * @extends {EventEmitter}
+ * @implements {IMailboxManager}
  */
-export class MailboxManager extends EventEmitter {
+export class MailboxManager extends EventEmitter implements IMailboxManager {
   /**
-   * The configuration of the mailbox manager.
+   * The mailbox options.
    *
-   * @private
+   * @protected
    * @type {MailboxManagerOptions}
-   */
-  public readonly options: MailboxManagerOptions;
-
-  /**
-   * The collection of tickets per user.
-   *
-   * @type {Collection<Snowflake, Collection<string, Ticket>>}
    * @memberof MailboxManager
    */
-  public readonly userTickets: Collection<
-    Snowflake,
-    Collection<string, Ticket>
-  >;
+  protected readonly options: MailboxManagerOptions;
+  readonly #cronJob: CronJob;
 
   /**
-   * The client that instantiated this Manager
-   * @name MailboxManager#client
-   * @type {Client}
-   * @readonly
+   * The discord client
+   *
+   * @memberof MailboxManager
    */
   public readonly client: Client;
 
-  /**
-   * The cron job to check if tickets need to be closed because outdated.
-   *
-   * @private
-   * @type {CronJob}
-   */
-  private job?: CronJob;
-
-  /**
-   * Whether the logging options is set with a format method or not
-   *
-   * @type {boolean}
-   */
-  public canFormatLogs: boolean;
+  /** @inherit */
+  public readonly usersTickets: Collection<UserId, UserTickets>;
 
   /**
    * Creates an instance of MailboxManager.
    * @param {Client} client
-   * @param {MailboxManagerOptions} [options]
+   * @param {MailboxManagerOptions} options
+   * @memberof MailboxManager
    */
-  constructor(
-    client: Client,
-    options: MailboxManagerOptions = {
-      tooMuchTickets: 'You have too much opened tickets!',
-      notAllowedToPing: 'You are not allowed to mention @everyone and @here.',
-      replyMessage: 'Use the "reply" feature to respond.',
-      ticketClose: (nbUserTicketsLeft) =>
-        `This ticket has been closed. You now have ${nbUserTicketsLeft} tickets that are still opened.`,
-      maxOngoingTicketsPerUser: 3,
-      closeTicketAfter: 60,
-      formatTitle: (id) => `Ticket ${id}`,
-      cronTime: '* * * * *',
-      mailboxChannel: null,
-      threadOptions: null,
-    }
-  ) {
+  constructor(client: Client, options: MailboxManagerOptions) {
     super();
 
-    const intents = new Intents(client.options.intents);
-    if (!intents.has(Intents.FLAGS.GUILDS)) {
-      throw new Error('GUILDS intent is required to use this package!');
-    }
-    if (!intents.has(Intents.FLAGS.GUILD_MESSAGES)) {
-      throw new Error('GUILD_MESSAGES intent is required to use this package!');
-    }
-    if (!intents.has(Intents.FLAGS.DIRECT_MESSAGES)) {
-      throw new Error(
-        'DIRECT_MESSAGES intent is required to use this package!'
-      );
-    }
-    if (
-      options.forceCloseEmoji &&
-      !intents.has(Intents.FLAGS.GUILD_MESSAGE_REACTIONS)
-    ) {
-      throw new Error(
-        'GUILD_MESSAGE_REACTIONS intent is required to use this package!'
-      );
-    }
-
-    const partials = client.options.partials;
-    if (!partials.includes(Constants.PartialTypes.CHANNEL)) {
-      throw new Error('CHANNEL partial is required to use this package!');
-    }
-    if (!partials.includes(Constants.PartialTypes.MESSAGE)) {
-      throw new Error('MESSAGE partial is required to use this package!');
-    }
-
-    if (!options.mailboxChannel) {
-      throw new Error('Please define the mailbox channel in the options!');
-    }
-
-    this.client = client;
     this.options = options;
-    this.userTickets = new Collection();
-    this.canFormatLogs =
-      this.options.loggingOptions && !!this.options.loggingOptions.format;
-
-    this.client.on('messageCreate', async (message) => {
-      handleMessage(this, message);
+    this.client = client;
+    this.usersTickets = new Collection<UserId, UserTickets>();
+    this.#cronJob = new CronJob({
+      cronTime: this.options.cronTime,
+      onTick: () => this.checkTickets(),
+      start: true,
+      runOnInit: true,
+      context: this,
     });
-    if (this.options.forceCloseEmoji) {
-      this.client.on('messageReactionAdd', async (messageReaction, user) => {
-        await handleReaction(this, messageReaction, user);
-      });
-    }
-
-    this.on(MailboxManagerEvents.ticketCreate, async (ticket: Ticket) =>
-      handleOpening(this, ticket)
-    );
-    this.on(MailboxManagerEvents.ticketClose, async (ticket: Ticket) =>
-      handleClosing(this, ticket)
-    );
-    this.on(MailboxManagerEvents.ticketLog, async (ticket: Ticket) =>
-      handleLog(this, ticket)
-    );
-
-    this.job = new CronJob(
-      this.options.cronTime,
-      () => this.checkTickets(),
-      null,
-      null,
-      null,
-      this
-    );
-    this.job.start();
   }
 
-  checkTickets() {
-    this.userTickets.each((userTickets) => {
-      userTickets.each((ticket) => {
-        if (ticket.isOutdated()) {
-          this.emit(MailboxManagerEvents.ticketClose, ticket);
-        }
+  /** @inherit */
+  checkTickets(): void {
+    this.usersTickets
+      .flatMap((ut: UserTickets) => ut)
+      .each(async (ticket: Ticket) => {
+        if (ticket.isOutdated(this.options.closeTicketAfterInMilliseconds))
+          this.closeTicket(ticket.id);
       });
-    });
+  }
+
+  /** @inherit */
+  createTicket(content: TicketContent): Ticket {
+    const ticket = new Ticket(content);
+
+    const userTickets =
+      this.usersTickets.get(ticket.createdBy.id) ??
+      new Collection<string, Ticket>();
+    if (userTickets.size === this.options.maxOnGoingTicketsPerUser)
+      throw new Error(ErrorMessages.tooMuchTicketsOpened);
+    userTickets.set(ticket.id, ticket);
+    this.usersTickets.set(ticket.createdBy.id, userTickets);
+
+    this.emit(MailboxManagerEvents.ticketCreate, ticket);
+    return ticket;
+  }
+
+  /** @inherit */
+  replyToTicket(content: TicketContent, ticketId: string): void {
+    const ticket = this.getTicketById(ticketId);
+
+    ticket.addMessage(content);
+    this.emit(MailboxManagerEvents.ticketUpdate, ticket);
+  }
+
+  /** @inherit */
+  closeTicket(ticketId: string): void {
+    const ticket = this.getTicketById(ticketId);
+    const userTickets = this.usersTickets.get(ticket.createdBy.id)!;
+
+    let tickets: Ticket[] = [];
+    ticket.close();
+    userTickets.delete(ticket.id);
+    if (userTickets.size === 0) this.usersTickets.delete(ticket.createdBy.id);
+    else tickets = [...userTickets.values()];
+
+    this.emit(MailboxManagerEvents.ticketClose, ticket, tickets);
+    this.emit(MailboxManagerEvents.ticketLog, ticket);
+  }
+
+  /**
+   * Gets a ticket by id.
+   *
+   * @param {string} ticketId
+   * @return {*}  {Ticket}
+   * @memberof MailboxManager
+   */
+  getTicketById(ticketId: string): Ticket {
+    const ticket = this.usersTickets
+      .flatMap((userTickets: UserTickets) => userTickets)
+      .find((t: Ticket) => t.id === ticketId);
+    if (!ticket) throw new Error(ErrorMessages.noOpenedTicketWithId);
+    return ticket;
+  }
+
+  /**
+   * Gets a ticket by last message id. If safeReturn is false and no ticket is found, throws an error.
+   *
+   * @param {string} lastMessageId
+   * @param {false} [safeReturn]
+   * @return {*}  {Ticket}
+   * @memberof MailboxManager
+   */
+  getTicketByLastMessage(lastMessageId: string, safeReturn?: false): Ticket;
+  getTicketByLastMessage(
+    lastMessageId: string,
+    safeReturn: true
+  ): Ticket | undefined;
+  getTicketByLastMessage(
+    lastMessageId: string,
+    safeReturn: boolean = false
+  ): Ticket | undefined {
+    const ticket = this.usersTickets
+      .flatMap((userTickets: UserTickets) => userTickets)
+      .find((t: Ticket) => t.lastMessage.id === lastMessageId);
+    if (!safeReturn && !ticket)
+      throw new Error(ErrorMessages.messageHasNoTicket);
+    return ticket;
   }
 }
-
-/**
- * Emitted when a new ticket is created by a user.
- * @event MailboxManager#ticketCreate
- * @param {Ticket} ticket The ticket
- * @example
- * manager.on(MailboxManagerEvents.ticketCreate, (ticket) => {
- *  console.log(`${ticket.id} has been created`);
- * });
- */
-
-/**
- * Emitted when a ticket is updated. A ticket update is basically a new message sent or received.
- * @event MailboxManager#ticketUpdate
- * @param {Ticket} ticket The ticket
- * @example
- * manager.on(MailboxManagerEvents.ticketUpdate, (ticket) => {
- *  console.log(`${ticket.id} has been updated`);
- * });
- */
-
-/**
- * Emitted when a ticket is logged. Always emitted when the ticket is getting closed.
- * @event MailboxManager#ticketLog
- * @param {Ticket} ticket The ticket
- * @example
- * manager.on(MailboxManagerEvents.ticketLog, (ticket) => {
- *  console.log(`${ticket.id} has been logged`);
- * });
- */
-
-/**
- * Emitted when a ticket is closed.
- * @event MailboxManager#ticketClose
- * @param {Ticket} ticket The ticket
- * @example
- * manager.on(MailboxManagerEvents.ticketClose, (ticket) => {
- *  console.log(`${ticket.id} has been closed`);
- * });
- */
-
-/**
- * Emitted when a ticket is force closed by someone.
- * @event MailboxManager#ticketForceClose
- * @param {Ticket} ticket The ticket
- * @param {Discord.User | Discord.PartialUser} user The user who force closed the ticket
- * @example
- * manager.on(MailboxManagerEvents.ticketForceClose, (ticket, user) => {
- *  console.log(`${ticket.id} has been force closed by ${user.username}`);
- * });
- */
-
-/**
- * Emitted when a ticket is removed from the collection. Always emitted when a ticket is closed.
- * @event MailboxManager#ticketDelete
- * @param {Ticket} ticket The ticket
- * @example
- * manager.on(MailboxManagerEvents.ticketDelete, (ticket) => {
- *  console.log(`${ticket.id} has been deleted`);
- * });
- */
-
-/**
- * Emitted when a reply is sent from a guild. Always emitted when a ticket is updated.
- * @event MailboxManager#replySent
- * @param {Discord.Message} message The message
- * @param {Discord.Message} answer The answer
- * @example
- * manager.on(MailboxManagerEvents.replySent, (message, answer) => {
- *  console.log(message.id);
- *  console.log(answer.id);
- * });
- */
-
-/**
- * Emitted when the original reply message is removed from the channel.
- * @event MailboxManager#replyDelete
- * @param {Discord.Message} message The message
- * @example
- * manager.on(MailboxManagerEvents.replyDelete, (message) => {
- *  console.log(message.id);
- * });
- */
-
-/**
- * Emitted when the thread channel is created (due to the ticket being created).
- * @event MailboxManager#threadCreate
- * @param {Ticket} ticket The ticket
- * @param {Discord.ThreadChannel} thread The thread channel
- * @example
- * manager.on(MailboxManagerEvents.threadCreate, (ticket, thread) => {
- * console.log(ticket.id) ;
- * console.log(thread.id);
- * });
- */
-
-/**
- * Emitted when the thread channel is archived (due to the ticket being closed).
- * @event MailboxManager#threadArchive
- * @param {Ticket} ticket The ticket
- * @param {Discord.ThreadChannel} thread The thread channel
- * @example
- * manager.on(MailboxManagerEvents.threadArchive, (ticket, thread) => {
- * console.log(ticket.id) ;
- * console.log(thread.id);
- * });
- */
