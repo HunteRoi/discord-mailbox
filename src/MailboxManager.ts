@@ -4,84 +4,151 @@ import { CronJob } from 'cron';
 
 import ErrorMessages from './ErrorMessages';
 import { MailboxManagerEvents } from './MailboxManagerEvents';
-import { MailboxManagerOptions, IMailboxManager, Ticket, TicketContent, UserId, UserTickets } from './types';
+import {
+  MailboxManagerOptions,
+  IMailboxManager,
+  Ticket,
+  TicketContent,
+  UserId,
+  UserTickets,
+} from './types';
 
+/**
+ * The base mailbox manager, handling tickets.
+ *
+ * @export
+ * @class MailboxManager
+ * @extends {EventEmitter}
+ * @implements {IMailboxManager}
+ */
 export class MailboxManager extends EventEmitter implements IMailboxManager {
-    protected readonly options: MailboxManagerOptions;
-    readonly #cronJob: CronJob;
+  /**
+   * The mailbox options.
+   *
+   * @protected
+   * @type {MailboxManagerOptions}
+   * @memberof MailboxManager
+   */
+  protected readonly options: MailboxManagerOptions;
+  readonly #cronJob: CronJob;
 
-    public readonly client: Client;
-    public readonly usersTickets: Collection<UserId, UserTickets>;
+  /**
+   * The discord client
+   *
+   * @memberof MailboxManager
+   */
+  public readonly client: Client;
 
-    constructor(client: Client, options: MailboxManagerOptions) {
-        super();
+  /** @inherit */
+  public readonly usersTickets: Collection<UserId, UserTickets>;
 
-        this.options = options;
-        this.client = client;
-        this.usersTickets = new Collection<UserId, UserTickets>();
-        this.#cronJob = new CronJob({
-            cronTime: this.options.cronTime,
-            onTick: () => this.checkTickets(),
-            start: true,
-            runOnInit: true,
-            context: this
-        });
-    }
+  /**
+   * Creates an instance of MailboxManager.
+   * @param {Client} client
+   * @param {MailboxManagerOptions} options
+   * @memberof MailboxManager
+   */
+  constructor(client: Client, options: MailboxManagerOptions) {
+    super();
 
-    checkTickets(): void {
-        this.usersTickets
-            .flatMap((ut: UserTickets) => ut)
-            .each(async (ticket: Ticket) => {
-                if (ticket.isOutdated(this.options.closeTicketAfterInMilliseconds))
-                    this.closeTicket(ticket.id);
-            });
-    }
+    this.options = options;
+    this.client = client;
+    this.usersTickets = new Collection<UserId, UserTickets>();
+    this.#cronJob = new CronJob({
+      cronTime: this.options.cronTime,
+      onTick: () => this.checkTickets(),
+      start: true,
+      runOnInit: true,
+      context: this,
+    });
+  }
 
-    createTicket(content: TicketContent): Ticket {
-        const ticket = new Ticket(content);
+  /** @inherit */
+  checkTickets(): void {
+    this.usersTickets
+      .flatMap((ut: UserTickets) => ut)
+      .each(async (ticket: Ticket) => {
+        if (ticket.isOutdated(this.options.closeTicketAfterInMilliseconds))
+          this.closeTicket(ticket.id);
+      });
+  }
 
-        const userTickets = this.usersTickets.get(ticket.createdBy.id) ?? new Collection<string, Ticket>();
-        if (userTickets.size === this.options.maxOnGoingTicketsPerUser)
-            throw new Error(ErrorMessages.tooMuchTicketsOpened);
-        userTickets.set(ticket.id, ticket);
-        this.usersTickets.set(ticket.createdBy.id, userTickets);
+  /** @inherit */
+  createTicket(content: TicketContent): Ticket {
+    const ticket = new Ticket(content);
 
-        this.emit(MailboxManagerEvents.ticketCreate, ticket);
-        return ticket;
-    }
+    const userTickets =
+      this.usersTickets.get(ticket.createdBy.id) ??
+      new Collection<string, Ticket>();
+    if (userTickets.size === this.options.maxOnGoingTicketsPerUser)
+      throw new Error(ErrorMessages.tooMuchTicketsOpened);
+    userTickets.set(ticket.id, ticket);
+    this.usersTickets.set(ticket.createdBy.id, userTickets);
 
-    replyToTicket(content: TicketContent, ticketId: string): void {
-        const ticket = this.getTicketById(ticketId);
+    this.emit(MailboxManagerEvents.ticketCreate, ticket);
+    return ticket;
+  }
 
-        ticket.addMessage(content);
-        this.emit(MailboxManagerEvents.ticketUpdate, ticket);
-    }
+  /** @inherit */
+  replyToTicket(content: TicketContent, ticketId: string): void {
+    const ticket = this.getTicketById(ticketId);
 
-    closeTicket(ticketId: string): void {
-        const ticket = this.getTicketById(ticketId);
-        const userTickets = this.usersTickets.get(ticket.createdBy.id)!;
+    ticket.addMessage(content);
+    this.emit(MailboxManagerEvents.ticketUpdate, ticket);
+  }
 
-        let tickets: Ticket[] = [];
-        ticket.close();
-        userTickets.delete(ticket.id);
-        if (userTickets.size === 0) this.usersTickets.delete(ticket.createdBy.id);
-        else tickets = [...userTickets.values()];
+  /** @inherit */
+  closeTicket(ticketId: string): void {
+    const ticket = this.getTicketById(ticketId);
+    const userTickets = this.usersTickets.get(ticket.createdBy.id)!;
 
-        this.emit(MailboxManagerEvents.ticketClose, ticket, tickets);
-        this.emit(MailboxManagerEvents.ticketLog, ticket);
-    }
+    let tickets: Ticket[] = [];
+    ticket.close();
+    userTickets.delete(ticket.id);
+    if (userTickets.size === 0) this.usersTickets.delete(ticket.createdBy.id);
+    else tickets = [...userTickets.values()];
 
-    getTicketById(ticketId: string): Ticket {
-        const ticket = this.usersTickets.flatMap((userTickets: UserTickets) => userTickets).find((t: Ticket) => t.id === ticketId);
-        if (!ticket) throw new Error(ErrorMessages.noOpenedTicketWithId);
-        return ticket;
-    }
+    this.emit(MailboxManagerEvents.ticketClose, ticket, tickets);
+    this.emit(MailboxManagerEvents.ticketLog, ticket);
+  }
 
-    getTicketByLastMessage(lastMessageId: string, safeReturn?: false): Ticket;
-    getTicketByLastMessage(lastMessageId: string, safeReturn: true): Ticket | undefined;
-    getTicketByLastMessage(lastMessageId: string, safeReturn: boolean = false): Ticket | undefined {
-        const ticket = this.usersTickets.flatMap((userTickets: UserTickets) => userTickets).find((t: Ticket) => t.lastMessage.id === lastMessageId);
-        if (!safeReturn && !ticket) throw new Error(ErrorMessages.messageHasNoTicket);
-        return ticket;
-    }
+  /**
+   * Gets a ticket by id.
+   *
+   * @param {string} ticketId
+   * @return {*}  {Ticket}
+   * @memberof MailboxManager
+   */
+  getTicketById(ticketId: string): Ticket {
+    const ticket = this.usersTickets
+      .flatMap((userTickets: UserTickets) => userTickets)
+      .find((t: Ticket) => t.id === ticketId);
+    if (!ticket) throw new Error(ErrorMessages.noOpenedTicketWithId);
+    return ticket;
+  }
+
+  /**
+   * Gets a ticket by last message id. If safeReturn is false and no ticket is found, throws an error.
+   *
+   * @param {string} lastMessageId
+   * @param {false} [safeReturn]
+   * @return {*}  {Ticket}
+   * @memberof MailboxManager
+   */
+  getTicketByLastMessage(lastMessageId: string, safeReturn?: false): Ticket;
+  getTicketByLastMessage(
+    lastMessageId: string,
+    safeReturn: true
+  ): Ticket | undefined;
+  getTicketByLastMessage(
+    lastMessageId: string,
+    safeReturn: boolean = false
+  ): Ticket | undefined {
+    const ticket = this.usersTickets
+      .flatMap((userTickets: UserTickets) => userTickets)
+      .find((t: Ticket) => t.lastMessage.id === lastMessageId);
+    if (!safeReturn && !ticket)
+      throw new Error(ErrorMessages.messageHasNoTicket);
+    return ticket;
+  }
 }

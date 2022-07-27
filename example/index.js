@@ -8,9 +8,13 @@ const client = new Client({
     Intents.FLAGS.GUILD_MESSAGES,
     Intents.FLAGS.GUILD_MESSAGE_REACTIONS,
     Intents.FLAGS.DIRECT_MESSAGES,
-    Intents.FLAGS.DIRECT_MESSAGE_REACTIONS
+    Intents.FLAGS.DIRECT_MESSAGE_REACTIONS,
   ],
-  partials: [Constants.PartialTypes.CHANNEL, Constants.PartialTypes.MESSAGE, Constants.PartialTypes.REACTION ],
+  partials: [
+    Constants.PartialTypes.CHANNEL,
+    Constants.PartialTypes.MESSAGE,
+    Constants.PartialTypes.REACTION,
+  ],
 });
 const manager = new MessageBasedMailboxManager(client, {
   mailboxChannel: 'TEXT_CHANNEL_ID',
@@ -22,9 +26,9 @@ const manager = new MessageBasedMailboxManager(client, {
     generateMessage: (ticket) =>
       `Logs for ticket ${ticket.id} - closed at ${new Date(ticket.closedAt)}`,
     generateLogEntry: (ticketContent) =>
-      `[${new Date(ticketContent.createdTimestamp)}] ${ticketContent.author.username} | ${
-        ticketContent.cleanContent
-      }`,
+      `[${new Date(ticketContent.createdTimestamp)}] ${
+        ticketContent.author.username
+      } | ${ticketContent.cleanContent}`,
     showSenderNames: true,
     sendToRecipient: false,
     channel: 'TEXT_CHANNEL_ID',
@@ -32,7 +36,8 @@ const manager = new MessageBasedMailboxManager(client, {
   },
   threadOptions: {
     name: (ticket) => `Ticket ${ticket.id}`,
-    startMessage: (ticket) => `New ticket created by ${ticket.createdBy} for <@&ROLE_ID>`,
+    startMessage: (ticket) =>
+      `New ticket created by ${ticket.createdBy} for <@&ROLE_ID>`,
   },
   embedOptions: {
     color: 12272523,
@@ -44,7 +49,7 @@ const manager = new MessageBasedMailboxManager(client, {
     'Please use the "reply" feature to send an answer to this message.',
   closedChannelPrefix: '[Closed] ',
   tooMuchTickets:
-    'You have too much tickets that are not closed! Please wait for your tickets to be closed before submitting new ones.'
+    'You have too much tickets that are not closed! Please wait for your tickets to be closed before submitting new ones.',
 });
 
 client.on('ready', () => console.log('Connected!'));
@@ -61,7 +66,9 @@ manager.on(MailboxManagerEvents.ticketCreate, async (ticket) => {
 
   // autoReplyMessage feature
   const user = ticket.createdBy;
-  await user.send('Your ticket has been received and will be treated soon. Please remain patient as we get back to you!');
+  await user.send(
+    'Your ticket has been received and will be treated soon. Please remain patient as we get back to you!'
+  );
 });
 manager.on(MailboxManagerEvents.ticketUpdate, (ticket) =>
   console.log(`${ticket.id} has been updated with a new message.`)
@@ -75,7 +82,9 @@ manager.on(MailboxManagerEvents.ticketClose, async (ticket, userTickets) => {
   // ticketClose feature
   const user = ticket.createdBy;
   const nbTickets = userTickets.length;
-  await user.send(`The ticket ${ticket.id} has been closed due to inactivity or manually by the receiver or yourself.\nYou now have ${nbTickets} opened tickets left.`);
+  await user.send(
+    `The ticket ${ticket.id} has been closed due to inactivity or manually by the receiver or yourself.\nYou now have ${nbTickets} opened tickets left.`
+  );
 });
 manager.on(MailboxManagerEvents.ticketForceClose, (ticket, user) =>
   console.log(`${user.username} forced closed ticket ${ticket.id}.`)

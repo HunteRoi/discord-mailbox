@@ -3,8 +3,8 @@
  *
  * @export
  * @param {string | null | undefined} str
- * @return {*}
+ * @return {boolean}
  */
-export function isNullOrWhiteSpaces(str: string | null | undefined) {
+export function isNullOrWhiteSpaces(str: string | null | undefined): boolean {
   return str === undefined || str === null || str.match(/^ *$/) !== null;
 }
