@@ -21,8 +21,8 @@ const client = new Client({
 });
 const manager = new InteractionBasedMailboxManager(client, {
   mailboxChannels: new Collection([
-    ['467990358572138509', '983121071093993512'],
-    ['623946586023526427', '689429717505409067'],
+    ['GUILD_ID', 'TEXT_CHANNEL_ID'],
+    ['GUILD_ID', 'TEXT_CHANNEL_ID'],
   ]),
   closeTicketAfterInMilliseconds: 60000, // in milliseconds
   maxOngoingTicketsPerUser: 3,
@@ -37,13 +37,13 @@ const manager = new InteractionBasedMailboxManager(client, {
       } | ${ticketContent.cleanContent}`,
     showSenderNames: true,
     sendToRecipient: false,
-    channels: new Collection([['467990358572138509', '992450508566577232']]),
+    channels: new Collection([['GUILD_ID', 'TEXT_CHANNEL_ID']]),
     sendInThread: true,
   },
   threadOptions: {
     name: (ticket) => `Ticket ${ticket.id}`,
     startMessage: (ticket) =>
-      `New ticket created by ${ticket.createdBy} for <@&992913484469772398>`,
+      `New ticket created by ${ticket.createdBy}`,
   },
   embedOptions: {
     color: 12272523,
@@ -120,6 +120,4 @@ manager.on(MailboxManagerEvents.threadCreate, (ticket, thread) => {
   console.log(`${ticket.id} is happening in ${thread.name}`);
 });
 
-client.login(
-  'ODk4OTg3NzI4OTMzMzYzODAy.GT4N8R.s8f5nfUsLC_LOjW1M_0neEH52Xmm3hzaePcXiY'
-);
+client.login('TOKEN');
