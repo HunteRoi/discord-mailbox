@@ -1,9 +1,12 @@
 # Breaking Changes
 
+## Support for Discord.js v14
+
+The entire library has been ported to djs v14.
+
 ## MailboxManager class
 
 The mailbox manager becomes a real tickets manager. It now only handles user tickets.
-For compatibility purpose, a `MessageBasedMailboxManager` class has been created. This last one works the same way the manager did in v2.
 
 ## Format Title parameter
 
@@ -16,8 +19,8 @@ function formatTitle(id: string): string {
 }
 
 // after
-function formatTitle(ticket: Ticket): string {
-    return `Ticket ${ticket.id}`;
+function formatTitle(ticket: Ticket, guild: Guild): string {
+    return `Ticket ${ticket.id} - ${guild.name}`;
 }
 ```
 
@@ -88,7 +91,15 @@ If you want to still use it, you can perform the same action through the `replyS
 This event was initially created to let the user know a replt has been deleted but the deletion behaviour has ben removed so thus event has no purpose anymore.
 It has thus been removed.
 
-## options#sendToRecipient Change
+## options#sendToRecipient Removal
 
-The `sendToRecipient` property of the options has been deprecated and changed to optional.
-Indeed, users have the fundamental right to receive and keep a copy of the conversation with anyone.
+The `sendToRecipient` property of the options has been removed. Indeed, users have the fundamental right to receive and keep a copy of the conversation with anyone.
+
+## options#mailboxChannel Removal
+
+The `mailboxChannel` property has been removed in profit of a `mailboxChannels` property to enable the management of several guilds by a single manager.
+
+## options#loggingOptions#channel Removal
+
+The `channel` property of the `loggingOptions` property has been removed in profit of a `channels` property to enable the management of several guilds by a single manager.
+

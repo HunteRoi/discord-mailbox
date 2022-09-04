@@ -35,14 +35,6 @@ export type LoggingOptions = {
   showSenderNames: boolean;
 
   /**
-   * @deprecated will be removed in next minor update.
-   * Users have the right to have a copy of the conversation.
-   *
-   * @type {boolean | undefined}
-   */
-  sendToRecipient?: boolean;
-
-  /**
    * The channel in which the logs are sent.
    *
    * @type {Collection<Snowflake, GuildTextBasedChannel>}
