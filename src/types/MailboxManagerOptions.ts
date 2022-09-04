@@ -1,13 +1,16 @@
-import { TextChannel, VoiceChannel, Snowflake } from 'discord.js';
+import { TextChannel, VoiceChannel, Snowflake, Collection } from 'discord.js';
 import { DateTime } from 'luxon';
 
 export type MailboxManagerOptions = {
   /**
-   * The mailbox channel in which the content is sent (or from which the thread are created).
+   * The mailbox channels in which the content is sent (or from which the threads are created).
    *
-   * @type {(TextChannel | VoiceChannel | Snowflake)}
+   * @type {Collection<Snowflake, (TextChannel | VoiceChannel | Snowflake)>}
    */
-  mailboxChannel: TextChannel | VoiceChannel | Snowflake;
+  mailboxChannels: Collection<
+    Snowflake,
+    TextChannel | VoiceChannel | Snowflake
+  >;
 
   /**
    * The duration in milliseconds after a ticket's last activity before it gets closed.

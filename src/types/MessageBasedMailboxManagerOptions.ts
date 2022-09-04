@@ -1,4 +1,4 @@
-import { EmojiIdentifierResolvable, MessageEmbedOptions } from 'discord.js';
+import { EmojiIdentifierResolvable, EmbedData, Guild } from 'discord.js';
 import { LoggingOptions } from './LoggingOptions';
 import { ThreadOptions } from './ThreadOptions';
 import { Ticket } from './Ticket';
@@ -22,16 +22,16 @@ export type MessageBasedMailboxManagerOptions = {
   /**
    * The embed options
    *
-   * @type {MessageEmbedOptions}
+   * @type {EmbedData}
    */
-  embedOptions?: MessageEmbedOptions;
+  embedOptions?: EmbedData;
 
   /**
    * The emoji used in reaction and in button to force close a ticket.
    *
-   * @type {EmojiIdentifierResolvable}
+   * @type {string}
    */
-  forceCloseEmoji?: EmojiIdentifierResolvable;
+  forceCloseEmoji?: string;
 
   /**
    * The emoji used in reaction to show the admins a ticket has received an answer.
@@ -44,7 +44,7 @@ export type MessageBasedMailboxManagerOptions = {
    * A function to build a ticket's title from the ticket object itself.
    *
    */
-  formatTitle: (ticket: Ticket) => string;
+  formatTitle: (ticket: Ticket, guild: Guild) => string;
 
   /**
    * The reply message

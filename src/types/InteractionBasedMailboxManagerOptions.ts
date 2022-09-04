@@ -1,35 +1,45 @@
-import { InteractionButtonOptions } from 'discord.js';
+import {
+  InteractionButtonComponentData,
+  SelectMenuComponentData,
+} from 'discord.js';
 import { ModalOptions } from './ModalOptions';
 import { MessageBasedMailboxManagerOptions } from './MessageBasedMailboxManagerOptions';
 
 export type InteractionBasedMailboxManagerOptions = {
   /**
+   * The settings of the select menu.
+   *
+   * @type {(Exclude<SelectMenuComponentData, 'disabled' | 'customId'>)}
+   */
+  selectGuildOptions: Exclude<SelectMenuComponentData, 'disabled' | 'customId'>;
+
+  /**
    * The settings of the creation button.
    *
-   * @type {(Exclude<InteractionButtonOptions, 'disabled' | 'customId'>)}
+   * @type {(Exclude<InteractionButtonComponentData, 'disabled' | 'customId'>)}
    */
   createButtonOptions: Exclude<
-    InteractionButtonOptions,
+    InteractionButtonComponentData,
     'disabled' | 'customId'
   >;
 
   /**
    * The settings of the reply button.
    *
-   * @type {(Exclude<InteractionButtonOptions, 'disabled' | 'customId'>)}
+   * @type {(Exclude<InteractionButtonComponentData, 'disabled' | 'customId'>)}
    */
   replyButtonOptions: Exclude<
-    InteractionButtonOptions,
+    InteractionButtonComponentData,
     'disabled' | 'customId'
   >;
 
   /**
    * The settings of the close button.
    *
-   * @type {(Exclude<InteractionButtonOptions, 'disabled' | 'emoji' | 'customId'>)}
+   * @type {(Exclude<InteractionButtonComponentData, 'disabled' | 'emoji' | 'customId'>)}
    */
   forceCloseButtonOptions: Exclude<
-    InteractionButtonOptions,
+    InteractionButtonComponentData,
     'disabled' | 'emoji' | 'customId'
   >;
 

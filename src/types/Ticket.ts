@@ -44,6 +44,7 @@ export class Ticket {
 
   #lastMessage!: TicketContent;
   #channelId: Snowflake | null;
+  #guildId: Snowflake | null;
   #closedAt: EpochTimeStamp | null;
 
   /**
@@ -80,6 +81,17 @@ export class Ticket {
   }
 
   /**
+   * Returns the guild of the ticket, if any.
+   *
+   * @readonly
+   * @type {(Snowflake | null)}
+   * @memberof Ticket
+   */
+  get guildId(): Snowflake | null {
+    return this.#guildId;
+  }
+
+  /**
    * Creates an instance of Ticket.
    * @param {TicketContent} firstMessage
    * @memberof Ticket
@@ -92,6 +104,7 @@ export class Ticket {
 
     this.#closedAt = null;
     this.#channelId = null;
+    this.#guildId = null;
     this.addMessage(firstMessage);
   }
 
@@ -103,6 +116,16 @@ export class Ticket {
    */
   setChannel(channelId: Snowflake): void {
     this.#channelId = channelId;
+  }
+
+  /**
+   * Sets the ticket's guild.
+   *
+   * @param {Snowflake} guildId
+   * @memberof Ticket
+   */
+  setGuild(guildId: Snowflake): void {
+    this.#guildId = guildId;
   }
 
   /**

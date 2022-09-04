@@ -1,7 +1,7 @@
 import {
   Collection,
   Message,
-  MessageAttachment,
+  Attachment,
   MessageMentions,
   ModalSubmitInteraction,
   Snowflake,
@@ -37,7 +37,7 @@ export type TicketContent = Pick<
  * @param {number} createdTimestamp
  * @param {(Snowflake | null)} [channelId=null]
  * @param {(TextBasedChannel | null)} [channel=null]
- * @param {Collection<string, MessageAttachment>} [attachments=new Collection()]
+ * @param {Collection<string, Attachment>} [attachments=new Collection()]
  * @return {*}  {TicketContent}
  */
 export function createTicketContent(
@@ -47,7 +47,7 @@ export function createTicketContent(
   createdTimestamp: number,
   channelId: Snowflake | null = null,
   channel: TextBasedChannel | null = null,
-  attachments: Collection<string, MessageAttachment> = new Collection()
+  attachments: Collection<string, Attachment> = new Collection()
 ): TicketContent {
   return {
     content,

@@ -1,4 +1,10 @@
-import { MessageOptions, GuildTextBasedChannel } from 'discord.js';
+import {
+  MessageOptions,
+  GuildTextBasedChannel,
+  Collection,
+  GuildResolvable,
+  Snowflake,
+} from 'discord.js';
 import { Ticket } from './Ticket';
 import { TicketContent } from './TicketContent';
 
@@ -39,9 +45,9 @@ export type LoggingOptions = {
   /**
    * The channel in which the logs are sent.
    *
-   * @type {GuildTextBasedChannel}
+   * @type {Collection<Snowflake, GuildTextBasedChannel>}
    */
-  channel: GuildTextBasedChannel;
+  channels: Collection<Snowflake, GuildTextBasedChannel>;
 
   /**
    * Whether the logs should be sent in the thread or not.

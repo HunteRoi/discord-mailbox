@@ -1,20 +1,17 @@
-import { TextInputComponentOptions } from 'discord.js';
+import { Guild, TextInputComponentData } from 'discord.js';
 
 export type ModalOptions = {
   /**
-   * The title of the modal.
+   * A function to build a modal's title from the selected guild object.
    *
    * @type {string}
    */
-  title: string;
+  formatTitle: (guild: Guild) => string;
 
   /**
    * The modal components' settings.
    *
-   * @type {(Exclude<TextInputComponentOptions, 'required' | 'value'>)}
+   * @type {(Exclude<TextInputComponentData, 'required' | 'value'>)}
    */
-  modalComponentsOptions: Exclude<
-    TextInputComponentOptions,
-    'required' | 'value'
-  >;
+  modalComponentsOptions: Exclude<TextInputComponentData, 'required' | 'value'>;
 };
