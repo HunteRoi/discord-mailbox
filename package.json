@@ -4,11 +4,10 @@
   "description": "A framework to integrate a mailbox inside your Discord bot built with DiscordJS",
   "main": "lib/index.js",
   "scripts": {
+    "start": "yarn build & node ./example/index.js",
     "build": "npx tsc",
     "format": "npx prettier --write \"src/**/*.ts\" \"example/**/*.js\" ",
-    "lint": "npx tslint -p tsconfig.json",
-    "example": "yarn build & node ./example/index.js",
-    "example:interaction": "yarn build & node ./example/index-interaction.js"
+    "lint": "npx tslint -p tsconfig.json"
   },
   "repository": "git://github.com/hunteroi/discord-mailbox.git",
   "keywords": [
@@ -28,7 +27,7 @@
   "homepage": "https://github.com/hunteroi/discord-mailbox#readme",
   "dependencies": {
     "cron": "^2.1.0",
-    "discord.js": "^13.9.1",
+    "discord.js": "^14.3.0",
     "uuid": "^8.3.2"
   },
   "devDependencies": {

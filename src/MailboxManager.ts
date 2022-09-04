@@ -51,6 +51,9 @@ export class MailboxManager extends EventEmitter implements IMailboxManager {
   constructor(client: Client, options: MailboxManagerOptions) {
     super();
 
+    if (!(options.mailboxChannels instanceof Collection))
+      throw new Error('No mailboxes registered within a Collection');
+
     this.options = options;
     this.client = client;
     this.usersTickets = new Collection<UserId, UserTickets>();

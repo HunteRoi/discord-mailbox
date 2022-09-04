@@ -1,23 +1,29 @@
-const { Client, Intents, Constants } = require('discord.js');
-
-const { MessageBasedMailboxManager, MailboxManagerEvents } = require('../lib');
+const {
+  Client,
+  GatewayIntentBits,
+  Partials,
+  ButtonStyle,
+  TextInputStyle,
+  Collection,
+} = require('discord.js');
+const {
+  InteractionBasedMailboxManager,
+  MailboxManagerEvents,
+} = require('../lib');
 
 const client = new Client({
   intents: [
-    Intents.FLAGS.GUILDS,
-    Intents.FLAGS.GUILD_MESSAGES,
-    Intents.FLAGS.GUILD_MESSAGE_REACTIONS,
-    Intents.FLAGS.DIRECT_MESSAGES,
-    Intents.FLAGS.DIRECT_MESSAGE_REACTIONS,
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.DirectMessages,
   ],
-  partials: [
-    Constants.PartialTypes.CHANNEL,
-    Constants.PartialTypes.MESSAGE,
-    Constants.PartialTypes.REACTION,
-  ],
+  partials: [Partials.Channel, Partials.Message],
 });
-const manager = new MessageBasedMailboxManager(client, {
-  mailboxChannel: 'TEXT_CHANNEL_ID',
+const manager = new InteractionBasedMailboxManager(client, {
+  mailboxChannels: new Collection([
+    ['467990358572138509', '983121071093993512'],
+    ['623946586023526427', '689429717505409067'],
+  ]),
   closeTicketAfterInMilliseconds: 60000, // in milliseconds
   maxOngoingTicketsPerUser: 3,
   cronTime: '* * * * *', // run each minute
@@ -31,33 +37,54 @@ const manager = new MessageBasedMailboxManager(client, {
       } | ${ticketContent.cleanContent}`,
     showSenderNames: true,
     sendToRecipient: false,
-    channel: 'TEXT_CHANNEL_ID',
+    channels: new Collection([['467990358572138509', '992450508566577232']]),
     sendInThread: true,
   },
   threadOptions: {
     name: (ticket) => `Ticket ${ticket.id}`,
     startMessage: (ticket) =>
-      `New ticket created by ${ticket.createdBy} for <@&ROLE_ID>`,
+      `New ticket created by ${ticket.createdBy} for <@&992913484469772398>`,
   },
   embedOptions: {
     color: 12272523,
   },
   forceCloseEmoji: '❌',
   replySentEmoji: '📤',
-  formatTitle: (ticket) => `[Ticket] ${ticket.id}`,
+  formatTitle: (ticket, guild) => `Ticket for ${guild.name}`,
   replyMessage:
     'Please use the "reply" feature to send an answer to this message.',
   closedChannelPrefix: '[Closed] ',
   tooMuchTickets:
     'You have too much tickets that are not closed! Please wait for your tickets to be closed before submitting new ones.',
+  createButtonOptions: {
+    label: 'CREATE TICKET',
+    emoji: '➕',
+    style: ButtonStyle.Primary,
+  },
+  replyButtonOptions: {
+    label: 'REPLY',
+    emoji: '↩️',
+    style: ButtonStyle.Primary,
+  },
+  forceCloseButtonOptions: {
+    label: 'CLOSE',
+    style: ButtonStyle.Secondary,
+  },
+  modalOptions: {
+    formatTitle: (guild) => `Ticket for ${guild.name}`,
+    modalComponentsOptions: {
+      placeholder: 'Write down your message here',
+      label: 'Your message',
+      style: TextInputStyle.Paragraph,
+    },
+  },
+  interactionReply: 'Your feedback has been received!',
 });
 
 client.on('ready', () => console.log('Connected!'));
-client.on('messageCreate', (message) => {
-  if (message.content === 'show me the tickets collection') {
-    message.reply(
-      `\`\`\`js\n${JSON.stringify(manager.usersTickets, null, 2)}\n\`\`\``
-    );
+client.on('messageCreate', async (message) => {
+  if (message.content === 'createTicket') {
+    await manager.sendSelectGuildMenu(message.author);
   }
 });
 
@@ -93,4 +120,6 @@ manager.on(MailboxManagerEvents.threadCreate, (ticket, thread) => {
   console.log(`${ticket.id} is happening in ${thread.name}`);
 });
 
-client.login('TOKEN');
+client.login(
+  'ODk4OTg3NzI4OTMzMzYzODAy.GT4N8R.s8f5nfUsLC_LOjW1M_0neEH52Xmm3hzaePcXiY'
+);
