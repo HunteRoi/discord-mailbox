@@ -35,6 +35,7 @@ import ErrorMessages from './ErrorMessages';
  * @export
  * @class MessageBasedMailboxManager
  * @extends {MailboxManager}
+ * @deprecated
  */
 export class MessageBasedMailboxManager extends MailboxManager {
   /**
