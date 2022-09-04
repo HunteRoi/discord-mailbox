@@ -32,7 +32,6 @@ import {
   Ticket,
   UserTickets,
 } from './types';
-import { arrowDown } from './utils/constants';
 import { isNullOrWhiteSpaces, truncate } from './utils/StringUtils';
 
 /**
@@ -140,7 +139,7 @@ export class InteractionBasedMailboxManager extends MailboxManager {
       await Promise.all(
         this.client.guilds.cache.map(async (guild: Guild) =>
           guild.members.cache.has(user.id) ||
-          (await guild.members.fetch(user.id)) !== null
+            (await guild.members.fetch(user.id)) !== null
             ? guild
             : null
         )
@@ -211,27 +210,23 @@ export class InteractionBasedMailboxManager extends MailboxManager {
     const logMessage =
       typeof content === 'string'
         ? ({
-            content,
-            files: [
-              {
-                attachment: Buffer.from(logs.join('\n')),
-                name: this.options.loggingOptions.generateFilename(ticket),
-              },
-            ],
-          } as MessageOptions)
+          content,
+          files: [
+            {
+              attachment: Buffer.from(logs.join('\n')),
+              name: this.options.loggingOptions.generateFilename(ticket),
+            },
+          ],
+        } as MessageOptions)
         : {
-            ...content,
-            files: [
-              {
-                attachment: Buffer.from(logs.join('\n')),
-                name: this.options.loggingOptions.generateFilename(ticket),
-              },
-            ],
-          };
-
-    if (this.options.loggingOptions.sendToRecipient) {
-      await ticket.createdBy.send(logMessage);
-    }
+          ...content,
+          files: [
+            {
+              attachment: Buffer.from(logs.join('\n')),
+              name: this.options.loggingOptions.generateFilename(ticket),
+            },
+          ],
+        };
 
     if (this.options.loggingOptions.sendInThread && ticket.threadId !== null) {
       const thread = (await this.client.channels.fetch(
@@ -247,10 +242,12 @@ export class InteractionBasedMailboxManager extends MailboxManager {
     const logChannel =
       typeof guildLogChannel === 'string'
         ? ((await this.client.channels.fetch(
-            guildLogChannel
-          )) as GuildTextBasedChannel)
+          guildLogChannel
+        )) as GuildTextBasedChannel)
         : guildLogChannel;
     await logChannel?.send(logMessage);
+
+    await ticket.createdBy.send(logMessage);
   }
 
   async #onCreateButtonInteraction(
@@ -338,8 +335,8 @@ export class InteractionBasedMailboxManager extends MailboxManager {
     const guildChannel =
       typeof mailboxChannel === 'string'
         ? ((await this.client.channels.fetch(
-            mailboxChannel
-          )) as BaseGuildTextChannel)
+          mailboxChannel
+        )) as BaseGuildTextChannel)
         : mailboxChannel;
     let thread: ThreadChannel | null = null;
     if (
@@ -372,15 +369,12 @@ export class InteractionBasedMailboxManager extends MailboxManager {
 
     const guild = await this.client.guilds.fetch(ticket.guildId!);
     const header = this.options.formatTitle(ticket, guild);
+    const description = ticket.lastMessage.cleanContent;
     const prefix =
       isSentToAdmin || this.options.loggingOptions?.showSenderNames
         ? `${ticket.lastMessage.author.username}:\n`
         : null;
     const suffix = `\n\n**${this.options.replyMessage}**`;
-    const description = `${!isNullOrWhiteSpaces(prefix) ? prefix : ''}${
-      ticket.lastMessage.cleanContent
-    }${!isNullOrWhiteSpaces(suffix) ? suffix : ''}`;
-
     const footer = `ID: ${ticket.lastMessage.id}`;
 
     const replyButtonRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
@@ -401,22 +395,22 @@ export class InteractionBasedMailboxManager extends MailboxManager {
 
     return this.options.embedOptions
       ? {
-          embeds: [
-            new EmbedBuilder(this.options.embedOptions)
-              .setAuthor({
-                name: header,
-                iconURL: isSentToAdmin ? arrowDown : undefined,
-              })
-              .setDescription(description)
-              .setFooter({ text: footer })
-              .setTimestamp(),
-          ],
-          components: [replyButtonRow],
-        }
+        embeds: [
+          new EmbedBuilder(this.options.embedOptions)
+            .setAuthor({
+              name: isSentToAdmin ? ticket.lastMessage.author.username : guild.name,
+              iconURL: isSentToAdmin ? ticket.lastMessage.author.displayAvatarURL() : guild.iconURL() ?? undefined,
+            })
+            .setDescription(description)
+            .setFooter({ text: header })
+            .setTimestamp(),
+        ],
+        components: [replyButtonRow],
+      }
       : {
-          content: `${header}\n\n​${description}\n\n​${footer}`,
-          components: [replyButtonRow],
-        };
+        content: `${header}\n\n${!isNullOrWhiteSpaces(prefix) ? prefix : ''}​${description}${!isNullOrWhiteSpaces(suffix) ? suffix : ''}\n\n​${footer}`,
+        components: [replyButtonRow],
+      };
   }
 
   async #generateModal(

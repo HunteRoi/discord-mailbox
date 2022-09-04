@@ -50,7 +50,7 @@ const manager = new InteractionBasedMailboxManager(client, {
   },
   forceCloseEmoji: '❌',
   replySentEmoji: '📤',
-  formatTitle: (ticket, guild) => `Ticket for ${guild.name}`,
+  formatTitle: (ticket, guild) => `Ticket ${ticket.id} for ${guild.name} (${guild.id})`,
   replyMessage:
     'Please use the "reply" feature to send an answer to this message.',
   closedChannelPrefix: '[Closed] ',
