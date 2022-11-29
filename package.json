@@ -6,6 +6,8 @@
   "scripts": {
     "start": "yarn build & node ./example/index.js",
     "build": "npx tsc",
+    "build:docs": "typedoc",
+    "prepublish": "yarn build:docs",
     "format": "npx prettier --write \"src/**/*.ts\" \"example/**/*.js\" ",
     "lint": "npx tslint -p tsconfig.json"
   },
@@ -38,6 +40,7 @@
     "@types/ws": "^8.5.3",
     "tslint": "^6.1.3",
     "tslint-config-prettier": "^1.18.0",
+    "typedoc": "^0.23.21",
     "typescript": "^4.7.4"
   },
   "directories": {
