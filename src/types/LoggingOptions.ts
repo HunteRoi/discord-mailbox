@@ -1,8 +1,7 @@
 import {
-  MessageOptions,
+  BaseMessageOptions,
   GuildTextBasedChannel,
   Collection,
-  GuildResolvable,
   Snowflake,
 } from 'discord.js';
 import { Ticket } from './Ticket';
@@ -19,7 +18,7 @@ export type LoggingOptions = {
    * A function to generate a message based on a provided ticket.
    *
    */
-  generateMessage: (ticket: Ticket) => string | MessageOptions;
+  generateMessage: (ticket: Ticket) => string | BaseMessageOptions;
 
   /**
    * A function to generate a log entry based on a provided ticket's content.

@@ -4,14 +4,12 @@ import {
   Client,
   GuildTextBasedChannel,
   Interaction,
-  MessageOptions,
   ModalSubmitInteraction,
   PartialTextBasedChannelFields,
   TextInputBuilder,
   ThreadChannel,
   User,
   ActionRowBuilder,
-  SelectMenuBuilder,
   ButtonBuilder,
   ModalBuilder,
   EmbedBuilder,
@@ -21,7 +19,9 @@ import {
   ThreadAutoArchiveDuration,
   ModalActionRowComponentBuilder,
   CacheType,
-  SelectMenuInteraction,
+  StringSelectMenuBuilder,
+  StringSelectMenuInteraction,
+  BaseMessageOptions
 } from 'discord.js';
 import ErrorMessages from './ErrorMessages';
 import { MailboxManager } from './MailboxManager';
@@ -150,8 +150,8 @@ export class InteractionBasedMailboxManager extends MailboxManager {
     );
 
     const rowSelectMenu =
-      new ActionRowBuilder<SelectMenuBuilder>().addComponents(
-        new SelectMenuBuilder(this.options.selectGuildOptions)
+      new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+        new StringSelectMenuBuilder(this.options.selectGuildOptions)
           .setCustomId(this.#selectGuild)
           .setOptions(
             userGuilds.map((g) => ({
@@ -176,7 +176,7 @@ export class InteractionBasedMailboxManager extends MailboxManager {
    * @memberof InteractionBasedMailboxManager
    */
   async #onGuildChoiceInteraction(
-    interaction: SelectMenuInteraction<CacheType>
+    interaction: StringSelectMenuInteraction<CacheType>
   ): Promise<void> {
     const guildId = interaction.values.shift()!;
     const guild = await this.client.guilds.fetch(guildId);
@@ -217,7 +217,7 @@ export class InteractionBasedMailboxManager extends MailboxManager {
               name: this.options.loggingOptions.generateFilename(ticket),
             },
           ],
-        } as MessageOptions)
+        } as BaseMessageOptions)
         : {
           ...content,
           files: [
@@ -364,7 +364,7 @@ export class InteractionBasedMailboxManager extends MailboxManager {
     return thread ?? guildChannel;
   }
 
-  async #generateMessageFromTicket(ticket: Ticket): Promise<MessageOptions> {
+  async #generateMessageFromTicket(ticket: Ticket): Promise<BaseMessageOptions> {
     const isSentToAdmin = ticket.lastMessage.channel?.type === ChannelType.DM;
 
     const guild = await this.client.guilds.fetch(ticket.guildId!);

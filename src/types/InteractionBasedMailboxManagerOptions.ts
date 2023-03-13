@@ -1,6 +1,6 @@
 import {
   InteractionButtonComponentData,
-  SelectMenuComponentData,
+  StringSelectMenuComponentData,
 } from 'discord.js';
 import { ModalOptions } from './ModalOptions';
 import { MessageBasedMailboxManagerOptions } from './MessageBasedMailboxManagerOptions';
@@ -9,9 +9,9 @@ export type InteractionBasedMailboxManagerOptions = {
   /**
    * The settings of the select menu.
    *
-   * @type {(Exclude<SelectMenuComponentData, 'disabled' | 'customId'>)}
+   * @type {(Exclude<StringSelectMenuComponentData, 'disabled' | 'customId'>)}
    */
-  selectGuildOptions: Exclude<SelectMenuComponentData, 'disabled' | 'customId'>;
+  selectGuildOptions: Exclude<StringSelectMenuComponentData, 'disabled' | 'customId'>;
 
   /**
    * The settings of the creation button.

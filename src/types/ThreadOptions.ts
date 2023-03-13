@@ -1,4 +1,4 @@
-import { MessageOptions } from 'discord.js';
+import { BaseMessageOptions } from 'discord.js';
 import { Ticket } from './Ticket';
 
 export type ThreadOptions = {
@@ -12,5 +12,5 @@ export type ThreadOptions = {
    * A function to create a start message for the thread.
    *
    */
-  startMessage: (ticket: Ticket) => string | MessageOptions;
+  startMessage: (ticket: Ticket) => string | BaseMessageOptions;
 };
