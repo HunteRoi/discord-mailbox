@@ -38,7 +38,7 @@ export type TicketContent = Pick<
  * @param {(Snowflake | null)} [channelId=null]
  * @param {(TextBasedChannel | null)} [channel=null]
  * @param {Collection<string, Attachment>} [attachments=new Collection()]
- * @return {*}  {TicketContent}
+ * @return {TicketContent}
  */
 export function createTicketContent(
   content: string,
@@ -70,7 +70,7 @@ export function createTicketContent(
  *
  * @export
  * @param {ModalSubmitInteraction} interaction
- * @return {*}  {TicketContent}
+ * @return {TicketContent}
  */
 export function createTicketContentFromInteraction(
   interaction: ModalSubmitInteraction

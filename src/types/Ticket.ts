@@ -42,9 +42,15 @@ export class Ticket {
    */
   readonly messages: TicketContent[];
 
+  /**
+   * The guild in which the ticket has been created.
+   *
+   * @memberof Ticket
+   */
+  readonly guildId: Snowflake;
+
+  #threadId: Snowflake | null;
   #lastMessage!: TicketContent;
-  #channelId: Snowflake | null;
-  #guildId: Snowflake | null;
   #closedAt: EpochTimeStamp | null;
 
   /**
@@ -77,18 +83,7 @@ export class Ticket {
    * @memberof Ticket
    */
   get threadId(): Snowflake | null {
-    return this.#channelId;
-  }
-
-  /**
-   * Returns the guild of the ticket, if any.
-   *
-   * @readonly
-   * @type {(Snowflake | null)}
-   * @memberof Ticket
-   */
-  get guildId(): Snowflake | null {
-    return this.#guildId;
+    return this.#threadId;
   }
 
   /**
@@ -96,36 +91,26 @@ export class Ticket {
    * @param {TicketContent} firstMessage
    * @memberof Ticket
    */
-  constructor(firstMessage: TicketContent) {
+  constructor(firstMessage: TicketContent, guildId: Snowflake) {
     this.id = uuid.v4();
     this.messages = [];
     this.createdBy = firstMessage.author;
     this.createdAt = firstMessage.createdTimestamp;
+    this.guildId = guildId;
 
+    this.#threadId = null;
     this.#closedAt = null;
-    this.#channelId = null;
-    this.#guildId = null;
     this.addMessage(firstMessage);
   }
 
   /**
-   * Sets the ticket's channel.
+   * Sets the ticket's thread channel.
    *
-   * @param {Snowflake} channelId
+   * @param {Snowflake} threadId
    * @memberof Ticket
    */
-  setChannel(channelId: Snowflake): void {
-    this.#channelId = channelId;
-  }
-
-  /**
-   * Sets the ticket's guild.
-   *
-   * @param {Snowflake} guildId
-   * @memberof Ticket
-   */
-  setGuild(guildId: Snowflake): void {
-    this.#guildId = guildId;
+  setThreadChannel(threadId: Snowflake): void {
+    this.#threadId = threadId;
   }
 
   /**
@@ -143,7 +128,7 @@ export class Ticket {
    * Checks if the ticket is outdated or not.
    *
    * @param {number} closeAfterInMilliseconds
-   * @return {*}  {boolean}
+   * @return {boolean}
    * @memberof Ticket
    */
   isOutdated(closeAfterInMilliseconds: number): boolean {
