@@ -66,6 +66,7 @@ export class InteractionBasedMailboxManager extends MailboxManager {
   constructor(client: Client, options: ManagerOptions) {
     super(client, options.mailboxOptions);
 
+    this.#options = options;
     this.client.on(
       Events.InteractionCreate,
       async (interaction: Interaction) => {

@@ -1,15 +1,5 @@
-const {
-  Client,
-  GatewayIntentBits,
-  Partials,
-  ButtonStyle,
-  TextInputStyle,
-  Collection,
-} = require('discord.js');
-const {
-  InteractionBasedMailboxManager,
-  MailboxManagerEvents,
-} = require('../lib');
+const { Client, GatewayIntentBits, Partials, ButtonStyle, TextInputStyle, Collection } = require('discord.js');
+const { InteractionBasedMailboxManager, MailboxManagerEvents } = require('../lib');
 
 const client = new Client({
   intents: [
@@ -41,10 +31,7 @@ const manager = new InteractionBasedMailboxManager(client, {
         generateFilename: (ticket) => `log-ticket-${ticket.id}.txt`,
         generateMessage: (ticket) =>
           `Logs for ticket ${ticket.id} - closed at ${new Date(ticket.closedAt)}`,
-        generateLogEntry: (ticketContent) =>
-          `[${new Date(ticketContent.createdTimestamp)}] ${
-            ticketContent.author.username
-          } | ${ticketContent.cleanContent}`,
+        generateLogEntry: (ticketContent) => `[${new Date(ticketContent.createdTimestamp)}] ${ticketContent.author.username} | ${ticketContent.cleanContent}`,
         showSenderNames: true,
         logChannel: 'TEXT_CHANNEL_ID',
         sendInThread: true,
@@ -96,12 +83,8 @@ manager.on(MailboxManagerEvents.ticketCreate, async (ticket) => {
     'Your ticket has been received and will be treated soon. Please remain patient as we get back to you!'
   );
 });
-manager.on(MailboxManagerEvents.ticketUpdate, (ticket) =>
-  console.log(`${ticket.id} has been updated with a new message.`)
-);
-manager.on(MailboxManagerEvents.ticketLog, (ticket) =>
-  console.log(`${ticket.id} got logged.`)
-);
+manager.on(MailboxManagerEvents.ticketUpdate, (ticket) => console.log(`${ticket.id} has been updated with a new message.`));
+manager.on(MailboxManagerEvents.ticketLog, (ticket) => console.log(`${ticket.id} got logged.`));
 manager.on(MailboxManagerEvents.ticketClose, async (ticket, userTickets) => {
   console.log(`${ticket.id} got closed!`);
 
@@ -112,11 +95,7 @@ manager.on(MailboxManagerEvents.ticketClose, async (ticket, userTickets) => {
     `The ticket ${ticket.id} has been closed due to inactivity or manually by the receiver or yourself.\nYou now have ${nbTickets} opened tickets left.`
   );
 });
-manager.on(MailboxManagerEvents.ticketForceClose, (ticket, user) =>
-  console.log(`${user.username} forced closed ticket ${ticket.id}.`)
-);
-manager.on(MailboxManagerEvents.threadCreate, (ticket, thread) => {
-  console.log(`${ticket.id} is happening in ${thread.name}`);
-});
+manager.on(MailboxManagerEvents.ticketForceClose, (ticket, user) => console.log(`${user.username} forced closed ticket ${ticket.id}.`));
+manager.on(MailboxManagerEvents.threadCreate, (ticket, thread) => console.log(`${ticket.id} is happening in ${thread.name}`));
 
 client.login('TOKEN');
