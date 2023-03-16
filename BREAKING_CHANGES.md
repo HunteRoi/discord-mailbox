@@ -8,4 +8,4 @@ It is strongly advised to revise the entire options you are passing to the manag
 
 ## Error messages have now error codes
 
-The error messages now have error codes from 001 to 0010. You can inspect these directly [in the source code](./src/ErrorMessages.ts).
+The error messages now have error codes from 001 to 0006. You can inspect these directly [in the source code](./src/ErrorMessages.ts).

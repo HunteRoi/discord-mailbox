@@ -1,6 +1,13 @@
-import { InteractionButtonComponentData } from 'discord.js';
+import { Guild, InteractionButtonComponentData } from 'discord.js';
+import { Ticket } from './Ticket';
 
 export type InteractionOptions = {
+    /**
+     * A function to build the reply message.
+     *
+     */
+    generateInteractionReplyMessage: (ticket: Ticket, guild: Guild) => string;
+
     /**
      * The settings of the creation button.
      *
@@ -18,7 +25,7 @@ export type InteractionOptions = {
     /**
      * The settings of the close button.
      *
-     * @type {(Exclude<InteractionButtonComponentData, 'disabled' | 'emoji' | 'customId'>)}
+     * @type {(Exclude<InteractionButtonComponentData, 'disabled' | 'customId'>)}
      */
-    forceCloseButtonOptions: Exclude<InteractionButtonComponentData, 'disabled' | 'emoji' | 'customId'>;
+    forceCloseButtonOptions?: Exclude<InteractionButtonComponentData, 'disabled' | 'customId'>;
 };

@@ -8,7 +8,7 @@ export type ManagerOptions = {
      *
      * @type {(Exclude<StringSelectMenuComponentData, 'disabled' | 'customId'>)}
      */
-    selectGuildOptions: Exclude<StringSelectMenuComponentData, 'disabled' | 'customId'>;
+    selectGuildOptions?: Exclude<StringSelectMenuComponentData, 'disabled' | 'customId'>;
 
     /**
      * The global options for the mailbox manager, applied to all guilds.

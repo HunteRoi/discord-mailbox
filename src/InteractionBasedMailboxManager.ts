@@ -279,7 +279,7 @@ export class InteractionBasedMailboxManager extends MailboxManager {
     this.emit(MailboxManagerEvents.ticketForceClose, ticket, interaction.user);
     this.closeTicket(ticket.id);
 
-    await interaction.editReply(guildOptions.generateReplyMessage(ticket, guild));
+    await interaction.editReply(guildOptions.generateInteractionReplyMessage(ticket, guild));
     await this.#updateThread(ticket, guildOptions.generateClosedChannelName);
   }
 
@@ -306,7 +306,7 @@ export class InteractionBasedMailboxManager extends MailboxManager {
     const ticketMessage = await this.#generateMessageFromTicket(ticket);
     await channel.send(ticketMessage);
 
-    await interaction.editReply(guildOptions.generateReplyMessage(ticket, guild));
+    await interaction.editReply(guildOptions.generateInteractionReplyMessage(ticket, guild));
   }
 
   async #onReplySubmitInteraction(
@@ -334,7 +334,7 @@ export class InteractionBasedMailboxManager extends MailboxManager {
       : ticket.createdBy
     ).send(ticketMessage);
 
-    await interaction.editReply(guildOptions.generateReplyMessage(ticket, guild));
+    await interaction.editReply(guildOptions.generateInteractionReplyMessage(ticket, guild));
     this.emit(MailboxManagerEvents.replySent, interaction, answerMessage);
   }
 
@@ -392,11 +392,10 @@ export class InteractionBasedMailboxManager extends MailboxManager {
         customId: `${this.#replyTicketIdPrefix}${ticket.id}`,
       })
     );
-    if (guildOptions.forceCloseEmoji) {
+    if (guildOptions.forceCloseButtonOptions) {
       replyButtonRow.addComponents(
         new ButtonBuilder({
           ...guildOptions.forceCloseButtonOptions,
-          emoji: guildOptions.forceCloseEmoji,
           customId: `${this.#forceCloseTicketIdPrefix}${ticket.id}`,
         })
       );

@@ -36,14 +36,6 @@ export type PerGuildMailboxOptions = {
     embedOptions?: EmbedOptions;
 
     /**
-     * The emoji used in reaction and in button to force close a ticket.
-     * Do not provide if you do not want to allow closing tickets manually.
-     *
-     * @type {string}
-     */
-    forceCloseEmoji?: string;
-
-    /**
      * The mailbox channel in which the content is sent (or from which the threads are created).
      *
      * @type {Snowflake}
