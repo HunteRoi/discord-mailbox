@@ -83,7 +83,7 @@ export class InteractionBasedMailboxManager extends MailboxManager {
             else if (interaction.customId.startsWith(this.#replyTicketIdPrefix))
               await this.#onReplySubmitInteraction(interaction);
           } else if (
-            interaction.isSelectMenu() &&
+            interaction.isStringSelectMenu() &&
             interaction.customId === this.#selectGuild
           )
             await this.#onGuildChoiceInteraction(interaction);

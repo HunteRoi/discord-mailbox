@@ -11,9 +11,9 @@ Discord Mailbox is a framework to easily add a mailbox inside your bot. The feat
 - Allow full customization of the embed (you can add image, thumbnail, etc)
 - And much more!
 
-![IMAGE](https://raw.githubusercontent.com/HunteRoi/discord-mailbox/master/assets/example.gif)
+![v3 example](https://raw.githubusercontent.com/HunteRoi/discord-mailbox/master/assets/v3_example.gif)
 
-See [./examples/index.js](https://github.com/hunteroi/discord-mailbox/tree/master/examples/index.js).
+See [./examples/index.js](https://github.com/hunteroi/discord-mailbox/tree/master/examples/index.js). If you want to try this example, you need to send `createTicket` in your bot's DM.
 
 ## Prerequisites ⚠️
 
