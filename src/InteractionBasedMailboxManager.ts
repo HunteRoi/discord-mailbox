@@ -2,7 +2,6 @@ import {
   BaseGuildTextChannel,
   ButtonInteraction,
   Client,
-  GuildTextBasedChannel,
   Interaction,
   ModalSubmitInteraction,
   PartialTextBasedChannelFields,
@@ -21,18 +20,21 @@ import {
   CacheType,
   StringSelectMenuBuilder,
   StringSelectMenuInteraction,
-  BaseMessageOptions
+  BaseMessageOptions,
+  Snowflake,
+  TextChannel
 } from 'discord.js';
 import ErrorMessages from './ErrorMessages';
 import { MailboxManager } from './MailboxManager';
 import { MailboxManagerEvents } from './MailboxManagerEvents';
 import {
   createTicketContentFromInteraction,
-  InteractionBasedMailboxManagerOptions,
   Ticket,
   UserTickets,
+  ManagerOptions
 } from './types';
 import { isNullOrWhiteSpaces, truncate } from './utils/StringUtils';
+
 
 /**
  * A mailbox working on interactions.
@@ -53,17 +55,18 @@ export class InteractionBasedMailboxManager extends MailboxManager {
    * @protected
    * @memberof InteractionBasedMailboxManager
    */
-  protected override readonly options!: InteractionBasedMailboxManagerOptions;
+  readonly #options!: ManagerOptions;
 
   /**
    * Creates an instance of InteractionBasedMailboxManager.
    * @param {Client} client
-   * @param {InteractionBasedMailboxManagerOptions} options
+   * @param {ManagerOptions} options
    * @memberof InteractionBasedMailboxManager
    */
-  constructor(client: Client, options: InteractionBasedMailboxManagerOptions) {
-    super(client, options);
+  constructor(client: Client, options: ManagerOptions) {
+    super(client, options.mailboxOptions);
 
+    this.#options = options;
     this.client.on(
       Events.InteractionCreate,
       async (interaction: Interaction) => {
@@ -89,18 +92,11 @@ export class InteractionBasedMailboxManager extends MailboxManager {
             await this.#onGuildChoiceInteraction(interaction);
         } catch (error) {
           console.debug(error);
-          if (
-            (interaction.isMessageComponent() || interaction.isModalSubmit()) &&
-            !interaction.replied
-          ) {
+          if ((interaction.isMessageComponent() || interaction.isModalSubmit()) && !interaction.replied) {
             if (interaction.deferred)
-              await interaction.editReply(
-                `Action not possible: ${(error as any).message}`
-              );
+              await interaction.editReply(`Action not possible: ${(error as any).message}`);
             else
-              await interaction.reply(
-                `Action not possible: ${(error as any).message}`
-              );
+              await interaction.reply(`Action not possible: ${(error as any).message}`);
           }
         }
       }
@@ -120,8 +116,10 @@ export class InteractionBasedMailboxManager extends MailboxManager {
     this.usersTickets
       .flatMap((ut: UserTickets) => ut)
       .each(async (ticket: Ticket) => {
-        if (ticket.isOutdated(this.options.closeTicketAfterInMilliseconds)) {
-          this.#updateThread(ticket);
+        const guildId = ticket.guildId;
+        const guildOptions = this.#options.optionsPerGuild.get(guildId);
+        if (ticket.isOutdated(this.#options.mailboxOptions.closeTicketAfterInMilliseconds) && guildOptions) {
+          await this.#updateThread(ticket, guildOptions.generateClosedChannelName);
           this.closeTicket(ticket.id);
         }
       });
@@ -131,7 +129,7 @@ export class InteractionBasedMailboxManager extends MailboxManager {
    * Sends the select menu to choose a guild.
    *
    * @param {User} user
-   * @return {*}  {Promise<void>}
+   * @return {Promise<void>}
    * @memberof InteractionBasedMailboxManager
    */
   public async sendSelectGuildMenu(user: User): Promise<void> {
@@ -144,14 +142,14 @@ export class InteractionBasedMailboxManager extends MailboxManager {
             : null
         )
       )
-    ).filter(
-      (guild): guild is Guild =>
-        guild instanceof Guild && this.options.mailboxChannels.has(guild.id)
-    );
+    ).filter((guild): guild is Guild => guild instanceof Guild && this.#options.optionsPerGuild.has(guild.id));
 
-    const rowSelectMenu =
-      new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
-        new StringSelectMenuBuilder(this.options.selectGuildOptions)
+    let row: ActionRowBuilder<StringSelectMenuBuilder> | ActionRowBuilder<ButtonBuilder>;
+    if (userGuilds.length === 1) {
+      row = await this.#generateStartButtonRow(userGuilds[0].id);
+    } else {
+      row = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+        new StringSelectMenuBuilder(this.#options.selectGuildOptions)
           .setCustomId(this.#selectGuild)
           .setOptions(
             userGuilds.map((g) => ({
@@ -163,50 +161,54 @@ export class InteractionBasedMailboxManager extends MailboxManager {
             }))
           )
       );
-    await user.send({
-      components: [rowSelectMenu],
-    });
+    }
+    await user.send({ components: [row] });
   }
 
   /**
    * Sends the start button to create a ticket.
    *
    * @param {SelectMenuInteraction<CacheType>} interaction
-   * @return {*}  {Promise<void>}
+   * @return {Promise<void>}
    * @memberof InteractionBasedMailboxManager
    */
-  async #onGuildChoiceInteraction(
-    interaction: StringSelectMenuInteraction<CacheType>
-  ): Promise<void> {
+  async #onGuildChoiceInteraction(interaction: StringSelectMenuInteraction<CacheType>): Promise<void> {
     const guildId = interaction.values.shift()!;
-    const guild = await this.client.guilds.fetch(guildId);
-    const buttonLabel = truncate(
-      `${this.options.createButtonOptions.label} - ${guild.name}`,
-      80
-    );
-    const rowButton = new ActionRowBuilder<ButtonBuilder>().addComponents(
-      new ButtonBuilder(this.options.createButtonOptions)
-        .setLabel(buttonLabel)
-        .setCustomId(`${this.#createTicketId}${guildId}`)
-    );
+    const rowButton = await this.#generateStartButtonRow(guildId);
     await interaction.update({ components: [rowButton] });
   }
 
-  async #handleLog(ticket: Ticket): Promise<void> {
-    if (!this.options.loggingOptions) return;
+  async #generateStartButtonRow(guildId: Snowflake): Promise<ActionRowBuilder<ButtonBuilder>> {
+    const guild = await this.client.guilds.fetch(guildId);
+    const guildOptions = this.#options.optionsPerGuild.get(guildId);
+    if (!guildOptions) throw Error(ErrorMessages.guildNotRegistered);
 
-    const logs = ticket.messages.map(
-      this.options.loggingOptions.generateLogEntry
+    const buttonLabel = truncate(`${guildOptions.createButtonOptions.label} - ${guild.name}`, 80);
+    const rowButton = new ActionRowBuilder<ButtonBuilder>().addComponents(
+      new ButtonBuilder(guildOptions.createButtonOptions)
+        .setLabel(buttonLabel)
+        .setCustomId(`${this.#createTicketId}${guildId}`)
     );
+    return rowButton;
+  }
+
+  async #handleLog(ticket: Ticket): Promise<void> {
+    const guildId = ticket.guildId;
+    const guildOptions = this.#options.optionsPerGuild.get(guildId);
+    if (!guildOptions) throw Error(ErrorMessages.guildNotRegistered);
+
+    if (!guildOptions.loggingOptions) return;
+
+    const logs = ticket.messages.map(guildOptions.loggingOptions.generateLogEntry);
     if (
       logs.length > 0 &&
-      !this.options.loggingOptions.showSenderNames &&
+      !guildOptions.loggingOptions.showSenderNames &&
       logs[0].includes(ticket.messages[0].author.username)
     ) {
       throw new Error(ErrorMessages.senderNamesAppear);
     }
 
-    const content = this.options.loggingOptions.generateMessage(ticket);
+    const content = guildOptions.loggingOptions.generateMessage(ticket);
     const logMessage =
       typeof content === 'string'
         ? ({
@@ -214,7 +216,7 @@ export class InteractionBasedMailboxManager extends MailboxManager {
           files: [
             {
               attachment: Buffer.from(logs.join('\n')),
-              name: this.options.loggingOptions.generateFilename(ticket),
+              name: guildOptions.loggingOptions.generateFilename(ticket),
             },
           ],
         } as BaseMessageOptions)
@@ -223,29 +225,22 @@ export class InteractionBasedMailboxManager extends MailboxManager {
           files: [
             {
               attachment: Buffer.from(logs.join('\n')),
-              name: this.options.loggingOptions.generateFilename(ticket),
+              name: guildOptions.loggingOptions.generateFilename(ticket),
             },
           ],
         };
 
-    if (this.options.loggingOptions.sendInThread && ticket.threadId !== null) {
+    if (guildOptions.loggingOptions.sendInThread && ticket.threadId !== null) {
       const thread = (await this.client.channels.fetch(
         ticket.threadId
       )) as ThreadChannel;
       await thread.send(logMessage);
-      await this.#updateThread(ticket);
+      await this.#updateThread(ticket, guildOptions.generateClosedChannelName);
     }
 
-    const guildLogChannel = this.options.loggingOptions.channels.get(
-      ticket.guildId!
-    );
-    const logChannel =
-      typeof guildLogChannel === 'string'
-        ? ((await this.client.channels.fetch(
-          guildLogChannel
-        )) as GuildTextBasedChannel)
-        : guildLogChannel;
-    await logChannel?.send(logMessage);
+    const guildLogChannel = guildOptions.loggingOptions.logChannel;
+    const logChannel = await this.client.channels.fetch(guildLogChannel) as TextChannel;
+    await logChannel.send(logMessage);
 
     await ticket.createdBy.send(logMessage);
   }
@@ -277,12 +272,16 @@ export class InteractionBasedMailboxManager extends MailboxManager {
       this.#forceCloseTicketIdPrefix.length
     );
     const ticket = this.getTicketById(ticketId);
+    const guildId = ticket.guildId;
+    const guildOptions = this.#options.optionsPerGuild.get(guildId);
+    if (!guildOptions) throw Error(ErrorMessages.guildNotRegistered);
+    const guild = await this.client.guilds.fetch(guildId);
 
     this.emit(MailboxManagerEvents.ticketForceClose, ticket, interaction.user);
     this.closeTicket(ticket.id);
 
-    await interaction.editReply(this.options.interactionReply);
-    await this.#updateThread(ticket);
+    await interaction.editReply(guildOptions.generateInteractionReplyMessage(ticket, guild));
+    await this.#updateThread(ticket, guildOptions.generateClosedChannelName);
   }
 
   async #onNewTicketSubmitInteraction(
@@ -291,16 +290,24 @@ export class InteractionBasedMailboxManager extends MailboxManager {
     await interaction.deferReply();
 
     const guildId = interaction.customId.slice(this.#createTicketId.length);
+    const guildOptions = this.#options.optionsPerGuild.get(guildId);
+    if (!guildOptions) throw Error(ErrorMessages.guildNotRegistered);
+
+    const guild = await this.client.guilds.fetch(guildId);
     const ticketContent = createTicketContentFromInteraction(interaction);
-
-    const ticket = this.createTicket(ticketContent);
-    ticket.setGuild(guildId);
-
+    let ticket: Ticket;
+    try {
+      ticket = this.createTicket(ticketContent, guildId, guildOptions.maxOnGoingTicketsPerUser);
+    } catch (error) {
+      if ((error as any).message.startsWith('0002'))
+        throw new Error(guildOptions.generateTooMuchTicketsMessage(interaction.user, guild));
+      throw error;
+    }
     const channel = await this.#getChannel(ticket);
     const ticketMessage = await this.#generateMessageFromTicket(ticket);
     await channel.send(ticketMessage);
 
-    await interaction.editReply(this.options.interactionReply);
+    await interaction.editReply(guildOptions.generateInteractionReplyMessage(ticket, guild));
   }
 
   async #onReplySubmitInteraction(
@@ -313,9 +320,13 @@ export class InteractionBasedMailboxManager extends MailboxManager {
       this.#replyTicketIdPrefix.length
     );
     const ticket = this.getTicketById(ticketId);
+    const guildId = ticket.guildId;
+    const guildOptions = this.#options.optionsPerGuild.get(guildId);
+    if (!guildOptions) throw Error(ErrorMessages.guildNotRegistered);
 
     this.replyToTicket(ticketContent, ticket.id);
 
+    const guild = await this.client.guilds.fetch(guildId);
     const ticketMessage = await this.#generateMessageFromTicket(ticket);
     const isSentToAdmin = interaction.channel?.type === ChannelType.DM;
     const channel = await this.#getChannel(ticket);
@@ -324,41 +335,36 @@ export class InteractionBasedMailboxManager extends MailboxManager {
       : ticket.createdBy
     ).send(ticketMessage);
 
-    await interaction.editReply(this.options.interactionReply);
+    await interaction.editReply(guildOptions.generateInteractionReplyMessage(ticket, guild));
     this.emit(MailboxManagerEvents.replySent, interaction, answerMessage);
   }
 
   async #getChannel(ticket: Ticket): Promise<PartialTextBasedChannelFields> {
-    const mailboxChannel = this.options.mailboxChannels.get(ticket.guildId!);
+    const guildId = ticket.guildId;
+    const guildOptions = this.#options.optionsPerGuild.get(guildId);
+    if (!guildOptions) throw Error(ErrorMessages.guildNotRegistered);
+
+    const mailboxChannel = guildOptions.mailboxChannel;
     if (!mailboxChannel) throw new Error(ErrorMessages.noMailboxRegistered);
 
-    const guildChannel =
-      typeof mailboxChannel === 'string'
-        ? ((await this.client.channels.fetch(
-          mailboxChannel
-        )) as BaseGuildTextChannel)
-        : mailboxChannel;
+    const guildChannel = await this.client.channels.fetch(mailboxChannel) as BaseGuildTextChannel;
     let thread: ThreadChannel | null = null;
     if (
       !ticket.threadId &&
-      this.options.threadOptions &&
+      guildOptions.threadOptions &&
       guildChannel.type !== ChannelType.GuildVoice
     ) {
-      const startMessage = await guildChannel.send(
-        this.options.threadOptions.startMessage(ticket)
-      );
-      thread = await (guildChannel as BaseGuildTextChannel).threads.create({
-        name: this.options.threadOptions.name(ticket),
+      const startMessage = await guildChannel.send(guildOptions.threadOptions.generateStartMessage(ticket));
+      thread = await guildChannel.threads.create({
+        name: guildOptions.threadOptions.generateName(ticket),
         autoArchiveDuration: ThreadAutoArchiveDuration.OneWeek,
         startMessage,
-        type: ChannelType.GuildPublicThread,
+        type: ChannelType.PublicThread,
       });
-      ticket.setChannel(thread.id);
+      ticket.setThreadChannel(thread.id);
       this.emit(MailboxManagerEvents.threadCreate, ticket, thread);
     } else if (ticket.threadId) {
-      thread = await (guildChannel as BaseGuildTextChannel).threads.fetch(
-        ticket.threadId
-      );
+      thread = await guildChannel.threads.fetch(ticket.threadId);
     }
 
     return thread ?? guildChannel;
@@ -367,36 +373,39 @@ export class InteractionBasedMailboxManager extends MailboxManager {
   async #generateMessageFromTicket(ticket: Ticket): Promise<BaseMessageOptions> {
     const isSentToAdmin = ticket.lastMessage.channel?.type === ChannelType.DM;
 
-    const guild = await this.client.guilds.fetch(ticket.guildId!);
-    const header = this.options.formatTitle(ticket, guild);
+    const guildId = ticket.guildId;
+    const guildOptions = this.#options.optionsPerGuild.get(guildId);
+    if (!guildOptions) throw Error(ErrorMessages.guildNotRegistered);
+
+    const guild = await this.client.guilds.fetch(ticket.guildId);
+    const header = guildOptions.generateMessageTitle(ticket, guild);
     const description = ticket.lastMessage.cleanContent;
     const prefix =
-      isSentToAdmin || this.options.loggingOptions?.showSenderNames
+      isSentToAdmin || guildOptions.loggingOptions?.showSenderNames
         ? `${ticket.lastMessage.author.username}:\n`
         : null;
-    const suffix = `\n\n**${this.options.replyMessage}**`;
+    const suffix = `\n\n**${guildOptions.generateReplyMessage(ticket, guild)}**`;
     const footer = `ID: ${ticket.lastMessage.id}`;
 
     const replyButtonRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
       new ButtonBuilder({
-        ...this.options.replyButtonOptions,
+        ...guildOptions.replyButtonOptions,
         customId: `${this.#replyTicketIdPrefix}${ticket.id}`,
       })
     );
-    if (this.options.forceCloseEmoji) {
+    if (guildOptions.forceCloseButtonOptions) {
       replyButtonRow.addComponents(
         new ButtonBuilder({
-          ...this.options.forceCloseButtonOptions,
-          emoji: this.options.forceCloseEmoji,
+          ...guildOptions.forceCloseButtonOptions,
           customId: `${this.#forceCloseTicketIdPrefix}${ticket.id}`,
         })
       );
     }
 
-    return this.options.embedOptions
+    return guildOptions.embedOptions
       ? {
         embeds: [
-          new EmbedBuilder(this.options.embedOptions)
+          new EmbedBuilder(guildOptions.embedOptions)
             .setAuthor({
               name: isSentToAdmin ? ticket.lastMessage.author.username : guild.name,
               iconURL: isSentToAdmin ? ticket.lastMessage.author.displayAvatarURL() : guild.iconURL() ?? undefined,
@@ -421,18 +430,20 @@ export class InteractionBasedMailboxManager extends MailboxManager {
       ticket && ticket.guildId
         ? ticket.guildId
         : customId.slice(this.#createTicketId.length);
+
+    const guildOptions = this.#options.optionsPerGuild.get(guildId);
+    if (!guildOptions) throw Error(ErrorMessages.guildNotRegistered);
+
     const guild = await this.client.guilds.fetch(guildId);
     const messageRow =
       new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
         new TextInputBuilder({
-          ...this.options.modalOptions.modalComponentsOptions,
+          ...guildOptions.modalOptions?.modalComponentsOptions,
           required: true,
           customId: 'message',
         })
       );
-    const modalTitle = ticket
-      ? this.options.formatTitle(ticket, guild)
-      : this.options.modalOptions.formatTitle(guild);
+    const modalTitle = (ticket ? guildOptions.generateMessageTitle(ticket, guild) : guildOptions.modalOptions?.generateTitle(guild)) ?? 'Anything to say?';
     // TODO: add an attachment component https://github.com/discord/discord-api-docs/discussions/4482
     const modal = new ModalBuilder()
       .setTitle(truncate(modalTitle, 45))
@@ -442,19 +453,13 @@ export class InteractionBasedMailboxManager extends MailboxManager {
     return modal;
   }
 
-  async #updateThread(ticket: Ticket): Promise<void> {
+  async #updateThread(ticket: Ticket, generateName?: (ticket: Ticket, guild: Guild, thread?: ThreadChannel) => string): Promise<void> {
     if (ticket.threadId) {
-      const thread = (await this.client.channels.fetch(
-        ticket.threadId
-      )) as ThreadChannel;
+      const thread = await this.client.channels.fetch(ticket.threadId) as ThreadChannel;
+      const newName = (generateName && generateName(ticket, thread.guild, thread)) ?? thread.name;
 
-      if (
-        this.options.closedChannelPrefix &&
-        !thread.name.startsWith(this.options.closedChannelPrefix)
-      ) {
-        await thread.setName(
-          `${this.options.closedChannelPrefix ?? ''}${thread.name}`
-        );
+      if (thread.name !== newName) {
+        await thread.setName(newName);
       }
       if (!thread.archived) await thread.setArchived(true);
     }

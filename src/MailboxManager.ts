@@ -1,11 +1,11 @@
-import { Client, Collection } from 'discord.js';
+import { Client, Collection, Snowflake } from 'discord.js';
 import { EventEmitter } from 'events';
 import { CronJob } from 'cron';
 
 import ErrorMessages from './ErrorMessages';
 import { MailboxManagerEvents } from './MailboxManagerEvents';
 import {
-  MailboxManagerOptions,
+  GlobalMailboxOptions,
   IMailboxManager,
   Ticket,
   TicketContent,
@@ -22,14 +22,7 @@ import {
  * @implements {IMailboxManager}
  */
 export class MailboxManager extends EventEmitter implements IMailboxManager {
-  /**
-   * The mailbox options.
-   *
-   * @protected
-   * @type {MailboxManagerOptions}
-   * @memberof MailboxManager
-   */
-  protected readonly options: MailboxManagerOptions;
+  readonly #managerOptions: GlobalMailboxOptions;
   readonly #cronJob: CronJob;
 
   /**
@@ -45,20 +38,17 @@ export class MailboxManager extends EventEmitter implements IMailboxManager {
   /**
    * Creates an instance of MailboxManager.
    * @param {Client} client
-   * @param {MailboxManagerOptions} options
+   * @param {GlobalMailboxOptions} options
    * @memberof MailboxManager
    */
-  constructor(client: Client, options: MailboxManagerOptions) {
+  constructor(client: Client, options: GlobalMailboxOptions) {
     super();
 
-    if (!(options.mailboxChannels instanceof Collection))
-      throw new Error('No mailboxes registered within a Collection');
-
-    this.options = options;
+    this.#managerOptions = options;
     this.client = client;
     this.usersTickets = new Collection<UserId, UserTickets>();
     this.#cronJob = new CronJob({
-      cronTime: this.options.cronTime,
+      cronTime: this.#managerOptions.cronTime,
       onTick: () => this.checkTickets(),
       start: true,
       runOnInit: true,
@@ -71,19 +61,18 @@ export class MailboxManager extends EventEmitter implements IMailboxManager {
     this.usersTickets
       .flatMap((ut: UserTickets) => ut)
       .each(async (ticket: Ticket) => {
-        if (ticket.isOutdated(this.options.closeTicketAfterInMilliseconds))
+        if (ticket.isOutdated(this.#managerOptions.closeTicketAfterInMilliseconds))
           this.closeTicket(ticket.id);
       });
   }
 
   /** @inherit */
-  createTicket(content: TicketContent): Ticket {
-    const ticket = new Ticket(content);
+  createTicket(content: TicketContent, guildId: Snowflake, maxOnGoingTicketsPerUser?: number): Ticket {
+    maxOnGoingTicketsPerUser ??= this.#managerOptions.maxOnGoingTicketsPerUser;
+    const ticket = new Ticket(content, guildId);
 
-    const userTickets =
-      this.usersTickets.get(ticket.createdBy.id) ??
-      new Collection<string, Ticket>();
-    if (userTickets.size === this.options.maxOnGoingTicketsPerUser)
+    const userTickets = this.usersTickets.get(ticket.createdBy.id) ?? new Collection<string, Ticket>();
+    if (userTickets.size >= maxOnGoingTicketsPerUser)
       throw new Error(ErrorMessages.tooMuchTicketsOpened);
     userTickets.set(ticket.id, ticket);
     this.usersTickets.set(ticket.createdBy.id, userTickets);
@@ -119,7 +108,7 @@ export class MailboxManager extends EventEmitter implements IMailboxManager {
    * Gets a ticket by id.
    *
    * @param {string} ticketId
-   * @return {*}  {Ticket}
+   * @return {Ticket}
    * @memberof MailboxManager
    */
   getTicketById(ticketId: string): Ticket {
@@ -135,18 +124,12 @@ export class MailboxManager extends EventEmitter implements IMailboxManager {
    *
    * @param {string} lastMessageId
    * @param {false} [safeReturn]
-   * @return {*}  {Ticket}
+   * @return {Ticket}
    * @memberof MailboxManager
    */
   getTicketByLastMessage(lastMessageId: string, safeReturn?: false): Ticket;
-  getTicketByLastMessage(
-    lastMessageId: string,
-    safeReturn: true
-  ): Ticket | undefined;
-  getTicketByLastMessage(
-    lastMessageId: string,
-    safeReturn: boolean = false
-  ): Ticket | undefined {
+  getTicketByLastMessage(lastMessageId: string, safeReturn: true): Ticket | undefined;
+  getTicketByLastMessage(lastMessageId: string, safeReturn: boolean = false): Ticket | undefined {
     const ticket = this.usersTickets
       .flatMap((userTickets: UserTickets) => userTickets)
       .find((t: Ticket) => t.lastMessage.id === lastMessageId);

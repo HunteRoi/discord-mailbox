@@ -1,25 +1,10 @@
-const noOpenedTicketWithId = 'Provided ticket ID does not exist for any user';
-const tooMuchTicketsOpened = 'Too much tickets for this user';
-const messageHasNoTicket = 'No ticket related to this message';
+enum ErrorMessages {
+  noOpenedTicketWithId = '0001 - Provided ticket ID does not exist for any user',
+  tooMuchTicketsOpened = '0002 - Too much tickets for this user',
+  messageHasNoTicket = '0003 - No ticket related to this message',
+  senderNamesAppear = '0004 - Sender names appear although the options is disabled',
+  noMailboxRegistered = '0005 - There is no mailbox registered in the options',
+  guildNotRegistered = '0006 - The provided guild is not registered by the mailbox manager',
+}
 
-const headerMustContainTicketId =
-  'Ticket title must at least contain the ticket id';
-const noPreviousMessageId = 'Previous message does not contain message ID';
-const messageIsNotReply = 'Message is not a reply';
-const notForceCloseEmoji = 'Reaction emoji is not for force close';
-const senderNamesAppear =
-  'Sender names appear although the options is disabled';
-const noMailboxRegistered = 'There are no mailbox registered in the options';
-
-export default {
-  noOpenedTicketWithId,
-  tooMuchTicketsOpened,
-  messageHasNoTicket,
-
-  headerMustContainTicketId,
-  noPreviousMessageId,
-  messageIsNotReply,
-  notForceCloseEmoji,
-  senderNamesAppear,
-  noMailboxRegistered,
-};
+export default ErrorMessages;

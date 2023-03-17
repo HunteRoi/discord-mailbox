@@ -19,10 +19,12 @@ export interface IMailboxManager {
    * Creates a ticket based on the provided content.
    *
    * @param {TicketContent} content
-   * @return {*}  {Ticket}
+   * @param {Snowflake} guildId
+   * @param {number?} maxOnGoingTicketsPerUser
+   * @return {Ticket}
    * @memberof IMailboxManager
    */
-  createTicket(content: TicketContent): Ticket;
+  createTicket(content: TicketContent, guildId: Snowflake, maxOnGoingTicketsPerUser?: number): Ticket;
 
   /**
    * Replies to a ticket with a provided content.
