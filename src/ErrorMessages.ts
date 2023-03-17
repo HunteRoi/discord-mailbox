@@ -1,4 +1,4 @@
-export enum ErrorMessage {
+export default enum ErrorMessage {
   noOpenedTicketWithId = '0001 - Provided ticket ID does not exist for any user';
   tooMuchTicketsOpened = '0002 - Too much tickets for this user';
   messageHasNoTicket = '0003 - No ticket related to this message';
