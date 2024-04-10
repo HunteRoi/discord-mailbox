@@ -1,5 +1,5 @@
-import { BaseMessageOptions } from 'discord.js';
-import { Ticket } from './Ticket';
+import type { BaseMessageOptions } from "discord.js";
+import type { Ticket } from "./Ticket";
 
 export interface ThreadOptions {
     /**

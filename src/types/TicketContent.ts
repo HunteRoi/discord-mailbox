@@ -1,30 +1,30 @@
 import {
-  Collection,
-  Message,
-  Attachment,
-  MessageMentions,
-  ModalSubmitInteraction,
-  Snowflake,
-  TextBasedChannel,
-  User,
-} from 'discord.js';
+    type Attachment,
+    Collection,
+    type Message,
+    type MessageMentions,
+    type ModalSubmitInteraction,
+    type Snowflake,
+    type TextBasedChannel,
+    type User,
+} from "discord.js";
 
 export type TicketContent = Pick<
-  Message,
-  | 'attachments'
-  | 'author'
-  | 'cleanContent'
-  | 'content'
-  | 'createdAt'
-  | 'createdTimestamp'
-  | 'id'
-  | 'stickers'
-  | 'url'
-  | 'channelId'
-  | 'embeds'
+    Message,
+    | "attachments"
+    | "author"
+    | "cleanContent"
+    | "content"
+    | "createdAt"
+    | "createdTimestamp"
+    | "id"
+    | "stickers"
+    | "url"
+    | "channelId"
+    | "embeds"
 > & {
-  mentions?: MessageMentions;
-  channel: TextBasedChannel | null;
+    mentions?: MessageMentions;
+    channel: TextBasedChannel | null;
 };
 
 /**
@@ -41,28 +41,28 @@ export type TicketContent = Pick<
  * @return {TicketContent}
  */
 export function createTicketContent(
-  content: string,
-  author: User,
-  createdAt: Date,
-  createdTimestamp: number,
-  channelId: Snowflake | null = null,
-  channel: TextBasedChannel | null = null,
-  attachments = new Collection<string, Attachment>()
+    content: string,
+    author: User,
+    createdAt: Date,
+    createdTimestamp: number,
+    channelId: Snowflake | null = null,
+    channel: TextBasedChannel | null = null,
+    attachments = new Collection<string, Attachment>(),
 ): TicketContent {
-  return {
-    content,
-    cleanContent: content.trim(),
-    author,
-    createdAt,
-    createdTimestamp,
-    attachments,
-    channel,
-    channelId: channelId ?? '',
-    id: '',
-    url: '',
-    embeds: [],
-    stickers: new Collection(),
-  };
+    return {
+        content,
+        cleanContent: content.trim(),
+        author,
+        createdAt,
+        createdTimestamp,
+        attachments,
+        channel,
+        channelId: channelId ?? "",
+        id: "",
+        url: "",
+        embeds: [],
+        stickers: new Collection(),
+    };
 }
 
 /**
@@ -73,15 +73,15 @@ export function createTicketContent(
  * @return {TicketContent}
  */
 export function createTicketContentFromInteraction(
-  interaction: ModalSubmitInteraction
+    interaction: ModalSubmitInteraction,
 ): TicketContent {
-  const messageContent = interaction.fields.getTextInputValue('message');
-  return createTicketContent(
-    messageContent,
-    interaction.user,
-    interaction.createdAt,
-    interaction.createdTimestamp,
-    interaction.channelId,
-    interaction.channel
-  );
+    const messageContent = interaction.fields.getTextInputValue("message");
+    return createTicketContent(
+        messageContent,
+        interaction.user,
+        interaction.createdAt,
+        interaction.createdTimestamp,
+        interaction.channelId,
+        interaction.channel,
+    );
 }

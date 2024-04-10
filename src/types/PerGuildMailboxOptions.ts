@@ -1,10 +1,10 @@
-import { Guild, Snowflake, ThreadChannel, User } from 'discord.js';
-import { Ticket } from './Ticket';
-import { EmbedOptions } from './EmbedOptions';
-import { InteractionOptions } from './InteractionOptions';
-import { LoggingOptions } from './LoggingOptions';
-import { ModalOptions } from './ModalOptions';
-import { ThreadOptions } from './ThreadOptions';
+import type { Guild, Snowflake, ThreadChannel, User } from "discord.js";
+import type { EmbedOptions } from "./EmbedOptions";
+import type { InteractionOptions } from "./InteractionOptions";
+import type { LoggingOptions } from "./LoggingOptions";
+import type { ModalOptions } from "./ModalOptions";
+import type { ThreadOptions } from "./ThreadOptions";
+import type { Ticket } from "./Ticket";
 
 export type PerGuildMailboxOptions = {
     /**
@@ -65,7 +65,11 @@ export type PerGuildMailboxOptions = {
      * A function to build the ticket's channel name when the ticket is closed.
      *
      */
-    generateClosedChannelName: (ticket: Ticket, guild: Guild, thread?: ThreadChannel) => string;
+    generateClosedChannelName: (
+        ticket: Ticket,
+        guild: Guild,
+        thread?: ThreadChannel,
+    ) => string;
 
     /**
      * A function to build the message sent to a user when they have too much ongoing tickets.

@@ -1,5 +1,5 @@
-import { Guild, InteractionButtonComponentData } from 'discord.js';
-import { Ticket } from './Ticket';
+import type { Guild, InteractionButtonComponentData } from "discord.js";
+import type { Ticket } from "./Ticket";
 
 export interface InteractionOptions {
     /**
@@ -13,19 +13,28 @@ export interface InteractionOptions {
      *
      * @type {(Exclude<InteractionButtonComponentData, 'disabled' | 'customId'>)}
      */
-    createButtonOptions: Exclude<InteractionButtonComponentData, 'disabled' | 'customId'>;
+    createButtonOptions: Exclude<
+        InteractionButtonComponentData,
+        "disabled" | "customId"
+    >;
 
     /**
      * The settings of the reply button.
      *
      * @type {(Exclude<InteractionButtonComponentData, 'disabled' | 'customId'>)}
      */
-    replyButtonOptions: Exclude<InteractionButtonComponentData, 'disabled' | 'customId'>;
+    replyButtonOptions: Exclude<
+        InteractionButtonComponentData,
+        "disabled" | "customId"
+    >;
 
     /**
      * The settings of the close button.
      *
      * @type {(Exclude<InteractionButtonComponentData, 'disabled' | 'customId'>)}
      */
-    forceCloseButtonOptions?: Exclude<InteractionButtonComponentData, 'disabled' | 'customId'>;
+    forceCloseButtonOptions?: Exclude<
+        InteractionButtonComponentData,
+        "disabled" | "customId"
+    >;
 }

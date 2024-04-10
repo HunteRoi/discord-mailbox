@@ -9,17 +9,15 @@
   },
   "description": "A framework to integrate a mailbox inside your Discord bot built with DiscordJS",
   "devDependencies": {
-    "@eslint/js": "^9.0.0",
+    "@biomejs/biome": "1.6.4",
     "@types/cron": "^2.4.0",
     "@types/luxon": "^3.4.2",
     "@types/node": "^20.12.7",
     "@types/uuid": "^9.0.8",
     "@types/ws": "^8.5.10",
     "discord.js": "^14.14.1",
-    "eslint": "^9.0.0",
     "typedoc": "^0.25.13",
-    "typescript": "^5.4.4",
-    "typescript-eslint": "^7.6.0"
+    "typescript": "^5.4.4"
   },
   "directories": {
     "lib": "lib"
@@ -47,7 +45,7 @@
   "scripts": {
     "build": "tsc",
     "build:docs": "typedoc",
-    "lint": "eslint ./src",
+    "lint": "biome check --apply ./src",
     "prepublish": "yarn lint && yarn build && yarn build:docs",
     "start": "yarn build & node ./examples/index.js"
   },

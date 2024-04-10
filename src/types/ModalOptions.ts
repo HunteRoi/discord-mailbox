@@ -1,4 +1,4 @@
-import { Guild, TextInputComponentData } from 'discord.js';
+import type { Guild, TextInputComponentData } from "discord.js";
 
 export interface ModalOptions {
     /**
@@ -13,5 +13,8 @@ export interface ModalOptions {
      *
      * @type {(Exclude<TextInputComponentData, 'required' | 'value'>)}
      */
-    modalComponentsOptions: Exclude<TextInputComponentData, 'required' | 'value'>;
+    modalComponentsOptions: Exclude<
+        TextInputComponentData,
+        "required" | "value"
+    >;
 }
