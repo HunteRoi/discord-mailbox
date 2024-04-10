@@ -1,52 +1,56 @@
 {
-  "name": "@hunteroi/discord-mailbox",
-  "version": "4.0.0",
-  "description": "A framework to integrate a mailbox inside your Discord bot built with DiscordJS",
-  "main": "lib/index.js",
-  "scripts": {
-    "start": "yarn build & node ./examples/index.js",
-    "build": "npx tsc",
-    "build:docs": "typedoc",
-    "prepublish": "yarn build:docs",
-    "format": "npx prettier --write \"src/**/*.ts\" \"examples/**/*.js\" ",
-    "lint": "npx tslint -p tsconfig.json"
+  "author": "HunteRoi <me@tinaeldevresse.eu> (https://tinaeldevresse.eu/)",
+  "bugs": {
+    "url": "https://github.com/hunteroi/discord-mailbox/issues"
   },
-  "repository": "git://github.com/hunteroi/discord-mailbox.git",
+  "dependencies": {
+    "cron": "^3.1.7",
+    "uuid": "^9.0.1"
+  },
+  "description": "A framework to integrate a mailbox inside your Discord bot built with DiscordJS",
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "@types/cron": "^2.4.0",
+    "@types/luxon": "^3.4.2",
+    "@types/node": "^20.12.7",
+    "@types/uuid": "^9.0.8",
+    "@types/ws": "^8.5.10",
+    "discord.js": "^14.14.1",
+    "eslint": "^9.0.0",
+    "typedoc": "^0.25.13",
+    "typescript": "^5.4.4",
+    "typescript-eslint": "^7.6.0"
+  },
+  "directories": {
+    "lib": "lib"
+  },
+  "engines": {
+    "node": ">=20.x"
+  },
+  "files": [
+    "lib/**/*"
+  ],
+  "funding": "https://github.com/sponsors/hunteroi",
+  "homepage": "https://github.com/hunteroi/discord-mailbox#readme",
   "keywords": [
     "mailbox",
     "discordjs",
     "modmail"
   ],
-  "author": "HunteRoi <me@tinaeldevresse.eu> (https://tinaeldevresse.eu/)",
-  "funding": "https://github.com/sponsors/hunteroi",
-  "engines": {
-    "node": ">=16.6.0"
-  },
   "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/hunteroi/discord-mailbox/issues"
+  "main": "lib/index.js",
+  "name": "@hunteroi/discord-mailbox",
+  "peerDependencies": {
+    "discord.js": "14.x"
   },
-  "homepage": "https://github.com/hunteroi/discord-mailbox#readme",
-  "dependencies": {
-    "cron": "^2.1.0",
-    "discord.js": "14.x",
-    "uuid": "^8.3.2"
+  "repository": "git://github.com/hunteroi/discord-mailbox.git",
+  "scripts": {
+    "build": "tsc",
+    "build:docs": "typedoc",
+    "lint": "eslint ./src",
+    "prepublish": "yarn lint && yarn build && yarn build:docs",
+    "start": "yarn build & node ./examples/index.js"
   },
-  "devDependencies": {
-    "@types/cron": "^2.0.0",
-    "@types/luxon": "^2.4.0",
-    "@types/node": "^17.0.45",
-    "@types/uuid": "^8.3.4",
-    "@types/ws": "^8.5.3",
-    "tslint": "^6.1.3",
-    "tslint-config-prettier": "^1.18.0",
-    "typedoc": "^0.23.21",
-    "typescript": "^4.7.4"
-  },
-  "directories": {
-    "lib": "lib"
-  },
-  "files": [
-    "lib/**/*"
-  ]
+  "type": "module",
+  "version": "4.0.2"
 }

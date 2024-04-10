@@ -23,7 +23,7 @@ import {
  */
 export class MailboxManager extends EventEmitter implements IMailboxManager {
   readonly #managerOptions: GlobalMailboxOptions;
-  readonly #cronJob: CronJob;
+  readonly #cronJob: CronJob<null, this>; // eslint-disable-line no-unused-private-class-members
 
   /**
    * The discord client
@@ -47,12 +47,12 @@ export class MailboxManager extends EventEmitter implements IMailboxManager {
     this.#managerOptions = options;
     this.client = client;
     this.usersTickets = new Collection<UserId, UserTickets>();
-    this.#cronJob = new CronJob({
+    this.#cronJob = CronJob.from({
       cronTime: this.#managerOptions.cronTime,
       onTick: () => this.checkTickets(),
       start: true,
       runOnInit: true,
-      context: this,
+      context: this
     });
   }
 
@@ -129,7 +129,7 @@ export class MailboxManager extends EventEmitter implements IMailboxManager {
    */
   getTicketByLastMessage(lastMessageId: string, safeReturn?: false): Ticket;
   getTicketByLastMessage(lastMessageId: string, safeReturn: true): Ticket | undefined;
-  getTicketByLastMessage(lastMessageId: string, safeReturn: boolean = false): Ticket | undefined {
+  getTicketByLastMessage(lastMessageId: string, safeReturn = false): Ticket | undefined {
     const ticket = this.usersTickets
       .flatMap((userTickets: UserTickets) => userTickets)
       .find((t: Ticket) => t.lastMessage.id === lastMessageId);

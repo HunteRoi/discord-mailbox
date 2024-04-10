@@ -94,9 +94,9 @@ export class InteractionBasedMailboxManager extends MailboxManager {
           console.debug(error);
           if ((interaction.isMessageComponent() || interaction.isModalSubmit()) && !interaction.replied) {
             if (interaction.deferred)
-              await interaction.editReply(`Action not possible: ${(error as any).message}`);
+              await interaction.editReply(`Action not possible: ${(error as any).message}`); // eslint-disable-line @typescript-eslint/no-explicit-any
             else
-              await interaction.reply(`Action not possible: ${(error as any).message}`);
+              await interaction.reply(`Action not possible: ${(error as any).message}`); // eslint-disable-line @typescript-eslint/no-explicit-any
           }
         }
       }
@@ -299,7 +299,7 @@ export class InteractionBasedMailboxManager extends MailboxManager {
     try {
       ticket = this.createTicket(ticketContent, guildId, guildOptions.maxOnGoingTicketsPerUser);
     } catch (error) {
-      if ((error as any).message.startsWith('0002'))
+      if ((error as any).message.startsWith('0002')) // eslint-disable-line @typescript-eslint/no-explicit-any
         throw new Error(guildOptions.generateTooMuchTicketsMessage(interaction.user, guild));
       throw error;
     }
@@ -417,6 +417,7 @@ export class InteractionBasedMailboxManager extends MailboxManager {
         components: [replyButtonRow],
       }
       : {
+        // eslint-disable-next-line no-irregular-whitespace
         content: `${header}\n\n${!isNullOrWhiteSpaces(prefix) ? prefix : ''}​${description}${!isNullOrWhiteSpaces(suffix) ? suffix : ''}\n\n​${footer}`,
         components: [replyButtonRow],
       };

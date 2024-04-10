@@ -1,7 +1,7 @@
 import { Guild, InteractionButtonComponentData } from 'discord.js';
 import { Ticket } from './Ticket';
 
-export type InteractionOptions = {
+export interface InteractionOptions {
     /**
      * A function to build the reply message.
      *
@@ -28,4 +28,4 @@ export type InteractionOptions = {
      * @type {(Exclude<InteractionButtonComponentData, 'disabled' | 'customId'>)}
      */
     forceCloseButtonOptions?: Exclude<InteractionButtonComponentData, 'disabled' | 'customId'>;
-};
+}

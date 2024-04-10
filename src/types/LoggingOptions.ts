@@ -2,7 +2,7 @@ import { BaseMessageOptions, Snowflake } from 'discord.js';
 import { Ticket } from './Ticket';
 import { TicketContent } from './TicketContent';
 
-export type LoggingOptions = {
+export interface LoggingOptions {
     /**
      * A function to generate a filename based on a provided ticket.
      *
@@ -41,4 +41,4 @@ export type LoggingOptions = {
      * @type {boolean}
      */
     sendInThread?: boolean;
-};
+}

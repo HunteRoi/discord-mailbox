@@ -1,7 +1,7 @@
 import { BaseMessageOptions } from 'discord.js';
 import { Ticket } from './Ticket';
 
-export type ThreadOptions = {
+export interface ThreadOptions {
     /**
      * A function to build the thread name based on the provided ticket.
      *
@@ -13,4 +13,4 @@ export type ThreadOptions = {
      *
      */
     generateStartMessage: (ticket: Ticket) => string | BaseMessageOptions;
-};
+}

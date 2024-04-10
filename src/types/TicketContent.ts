@@ -47,7 +47,7 @@ export function createTicketContent(
   createdTimestamp: number,
   channelId: Snowflake | null = null,
   channel: TextBasedChannel | null = null,
-  attachments: Collection<string, Attachment> = new Collection()
+  attachments = new Collection<string, Attachment>()
 ): TicketContent {
   return {
     content,

@@ -2,7 +2,7 @@ import { Collection, GuildResolvable, StringSelectMenuComponentData } from 'disc
 import { GlobalMailboxOptions } from './GlobalMailboxOptions';
 import { PerGuildMailboxOptions } from './PerGuildMailboxOptions';
 
-export type ManagerOptions = {
+export interface ManagerOptions {
     /**
      * The settings of the select menu.
      *
@@ -23,4 +23,4 @@ export type ManagerOptions = {
      * @type {Collection<GuildResolvable, PerGuildMailboxOptions>}
      */
     optionsPerGuild: Collection<GuildResolvable, PerGuildMailboxOptions>;
-};
+}

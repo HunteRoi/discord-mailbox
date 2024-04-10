@@ -1,6 +1,6 @@
 import { DateTime } from 'luxon';
 
-export type GlobalMailboxOptions = {
+export interface GlobalMailboxOptions {
     /**
      * The duration in milliseconds after a ticket's last activity before it gets closed.
      *
@@ -21,4 +21,4 @@ export type GlobalMailboxOptions = {
      * @type {(string | Date | DateTime)}
      */
     cronTime: string | Date | DateTime;
-};
+}
