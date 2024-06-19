@@ -11,10 +11,10 @@ export interface ModalOptions {
     /**
      * The modal components' settings.
      *
-     * @type {(Exclude<TextInputComponentData, 'required' | 'value'>)}
+     * @type {(Omit<TextInputComponentData, 'required' | 'value' | 'type' | 'customId'>)}
      */
-    modalComponentsOptions: Exclude<
+    modalComponentsOptions: Omit<
         TextInputComponentData,
-        "required" | "value"
+        "required" | "value" | "type" | "customId"
     >;
 }

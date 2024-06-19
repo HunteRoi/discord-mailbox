@@ -1,6 +1,7 @@
 import type { BaseMessageOptions, Snowflake } from "discord.js";
-import type { Ticket } from "./Ticket";
-import type { TicketContent } from "./TicketContent";
+
+import type { Ticket } from "./Ticket.js";
+import type { TicketContent } from "./TicketContent.js";
 
 export interface LoggingOptions {
     /**

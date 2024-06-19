@@ -47,8 +47,8 @@
     "build:docs": "typedoc",
     "lint": "biome check --apply ./src",
     "prepublish": "yarn lint && yarn build && yarn build:docs",
-    "start": "yarn build & node ./examples/index.js"
+    "start": "yarn build && tsc ./examples/index.ts --target esnext --module nodenext --moduleResolution nodenext && node ./examples/index.js"
   },
   "type": "module",
-  "version": "4.0.2"
+  "version": "4.1.0"
 }

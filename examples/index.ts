@@ -1,5 +1,6 @@
-const { Client, GatewayIntentBits, Partials, ButtonStyle, TextInputStyle, Collection } = require('discord.js');
-const { InteractionBasedMailboxManager, MailboxManagerEvents } = require('../lib');
+import { ButtonStyle, Client, Collection, GatewayIntentBits, Partials, TextInputStyle } from 'discord.js';
+
+import { InteractionBasedMailboxManager, MailboxManagerEvents } from '../lib/index.js';
 
 const client = new Client({
   intents: [
@@ -12,12 +13,12 @@ const client = new Client({
 const manager = new InteractionBasedMailboxManager(client, {
   mailboxOptions: {
     closeTicketAfterInMilliseconds: 60000, // in milliseconds
-    maxOngoingTicketsPerUser: 3,
+    maxOnGoingTicketsPerUser: 3,
     cronTime: '* * * * *', // run each minute
   },
   optionsPerGuild: new Collection([
     ['GUILD_ID', {
-      mailboxChannel: 'TEXT_CHANNEL_ID',
+      mailboxChannel: 'CHANNEL_ID',
       maxOnGoingTicketsPerUser: 2,
       modalOptions: {
         generateTitle: (guild) => `Ticket for ${guild.name}`,
@@ -28,12 +29,58 @@ const manager = new InteractionBasedMailboxManager(client, {
         },
       },
       loggingOptions: {
+        logChannel: 'CHANNEL_ID',
         generateFilename: (ticket) => `log-ticket-${ticket.id}.txt`,
-        generateMessage: (ticket) =>
-          `Logs for ticket ${ticket.id} - closed at ${new Date(ticket.closedAt)}`,
+        generateMessage: (ticket) => ticket.closedAt ? `Logs for ticket ${ticket.id} - closed at ${new Date(ticket.closedAt)}` : `Logs for ticket ${ticket.id} (not closed)`,
         generateLogEntry: (ticketContent) => `[${new Date(ticketContent.createdTimestamp)}] ${ticketContent.author.username} | ${ticketContent.cleanContent}`,
         showSenderNames: true,
-        logChannel: 'TEXT_CHANNEL_ID',
+        sendInThread: true,
+      },
+      threadOptions: {
+        generateName: (ticket) => `Ticket ${ticket.id}`,
+        generateStartMessage: (ticket) => `New ticket created by ${ticket.createdBy}`,
+      },
+      embedOptions: {
+        color: 12272523,
+      },
+      generateReplyMessage: (ticket, guild) => 'Please use the reply button to send an answer to this message.',
+      generateMessageTitle: (ticket, guild) => `Ticket ${ticket.id} for ${guild.name} (${guild.id})`,
+      generateClosedChannelName: (ticket, guild, thread) => `[Closed] ${thread?.name ?? ticket.id}`,
+      generateTooMuchTicketsMessage: (user, guild) => 'You have too much tickets that are not closed! Please wait for your tickets to be closed before submitting new ones.',
+      generateInteractionReplyMessage: (ticket, guild) => 'Your feedback has been received!',
+      createButtonOptions: {
+        label: 'CREATE TICKET',
+        emoji: '➕',
+        style: ButtonStyle.Primary,
+      },
+      replyButtonOptions: {
+        label: 'REPLY',
+        emoji: '↩️',
+        style: ButtonStyle.Primary,
+      },
+      forceCloseButtonOptions: {
+        label: 'CLOSE',
+        emoji: '❌',
+        style: ButtonStyle.Secondary,
+      }
+    }],
+    ['GUILD_ID', {
+      mailboxChannel: 'CHANNEL_ID',
+      maxOnGoingTicketsPerUser: 4,
+      modalOptions: {
+        generateTitle: (guild) => `Ticket for ${guild.name}`,
+        modalComponentsOptions: {
+          placeholder: 'Write down your message here',
+          label: 'Your message',
+          style: TextInputStyle.Paragraph,
+        },
+      },
+      loggingOptions: {
+        logChannel: 'CHANNEL_ID',
+        generateFilename: (ticket) => `log-ticket-${ticket.id}.txt`,
+        generateMessage: (ticket) => ticket.closedAt ? `Logs for ticket ${ticket.id} - closed at ${new Date(ticket.closedAt)}` : `Logs for ticket ${ticket.id} (not closed)`,
+        generateLogEntry: (ticketContent) => `[${new Date(ticketContent.createdTimestamp)}] ${ticketContent.author.username} | ${ticketContent.cleanContent}`,
+        showSenderNames: true,
         sendInThread: true,
       },
       threadOptions: {

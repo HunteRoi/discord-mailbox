@@ -3,8 +3,9 @@ import type {
     GuildResolvable,
     StringSelectMenuComponentData,
 } from "discord.js";
-import type { GlobalMailboxOptions } from "./GlobalMailboxOptions";
-import type { PerGuildMailboxOptions } from "./PerGuildMailboxOptions";
+
+import type { GlobalMailboxOptions } from "./GlobalMailboxOptions.js";
+import type { PerGuildMailboxOptions } from "./PerGuildMailboxOptions.js";
 
 export interface ManagerOptions {
     /**

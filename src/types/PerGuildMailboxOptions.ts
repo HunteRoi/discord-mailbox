@@ -1,10 +1,11 @@
 import type { Guild, Snowflake, ThreadChannel, User } from "discord.js";
-import type { EmbedOptions } from "./EmbedOptions";
-import type { InteractionOptions } from "./InteractionOptions";
-import type { LoggingOptions } from "./LoggingOptions";
-import type { ModalOptions } from "./ModalOptions";
-import type { ThreadOptions } from "./ThreadOptions";
-import type { Ticket } from "./Ticket";
+
+import type { EmbedOptions } from "./EmbedOptions.js";
+import type { InteractionOptions } from "./InteractionOptions.js";
+import type { LoggingOptions } from "./LoggingOptions.js";
+import type { ModalOptions } from "./ModalOptions.js";
+import type { ThreadOptions } from "./ThreadOptions.js";
+import type { Ticket } from "./Ticket.js";
 
 export type PerGuildMailboxOptions = {
     /**

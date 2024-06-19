@@ -1,7 +1,7 @@
 import type { Collection, Snowflake } from "discord.js";
 
-import type { Ticket } from "./Ticket";
-import type { TicketContent } from "./TicketContent";
+import type { Ticket } from "./Ticket.js";
+import type { TicketContent } from "./TicketContent.js";
 
 export type UserId = Snowflake;
 export type UserTickets = Collection<string, Ticket>;

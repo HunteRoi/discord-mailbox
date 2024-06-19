@@ -1,7 +1,7 @@
 import type { Snowflake, User } from "discord.js";
 import * as uuid from "uuid";
 
-import type { TicketContent } from "./TicketContent";
+import type { TicketContent } from "./TicketContent.js";
 
 /**
  * A ticket entity.

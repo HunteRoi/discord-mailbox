@@ -24,16 +24,17 @@ import {
     type ThreadChannel,
     type User,
 } from "discord.js";
-import ErrorMessages from "./ErrorMessages";
-import { MailboxManager } from "./MailboxManager";
-import { MailboxManagerEvents } from "./MailboxManagerEvents";
+
+import ErrorMessages from "./ErrorMessages.js";
+import { MailboxManager } from "./MailboxManager.js";
+import { MailboxManagerEvents } from "./MailboxManagerEvents.js";
 import {
     type ManagerOptions,
     type Ticket,
     type UserTickets,
     createTicketContentFromInteraction,
-} from "./types";
-import { isNullOrWhiteSpaces, truncate } from "./utils/StringUtils";
+} from "./types/index.js";
+import { isNullOrWhiteSpaces, truncate } from "./utils/StringUtils.js";
 
 /**
  * A mailbox working on interactions.

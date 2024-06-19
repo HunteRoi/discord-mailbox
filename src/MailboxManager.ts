@@ -2,8 +2,8 @@ import { EventEmitter } from "node:events";
 import { CronJob } from "cron";
 import { type Client, Collection, type Snowflake } from "discord.js";
 
-import ErrorMessages from "./ErrorMessages";
-import { MailboxManagerEvents } from "./MailboxManagerEvents";
+import ErrorMessages from "./ErrorMessages.js";
+import { MailboxManagerEvents } from "./MailboxManagerEvents.js";
 import {
     type GlobalMailboxOptions,
     type IMailboxManager,
@@ -11,7 +11,7 @@ import {
     type TicketContent,
     type UserId,
     type UserTickets,
-} from "./types";
+} from "./types/index.js";
 
 /**
  * The base mailbox manager, handling tickets.
