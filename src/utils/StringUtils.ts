@@ -6,7 +6,7 @@
  * @return {boolean}
  */
 export function isNullOrWhiteSpaces(str: string | null | undefined): boolean {
-  return str === undefined || str === null || str.match(/^ *$/) !== null;
+    return str === undefined || str === null || str.match(/^ *$/) !== null;
 }
 
 /**
@@ -18,5 +18,5 @@ export function isNullOrWhiteSpaces(str: string | null | undefined): boolean {
  * @return {string} truncated {str}
  */
 export function truncate(str: string, maxSize: number): string {
-  return str.length <= maxSize ? str : str.slice(0, maxSize - 3) + '...';
+    return str.length <= maxSize ? str : `${str.slice(0, maxSize - 3)}...`;
 }

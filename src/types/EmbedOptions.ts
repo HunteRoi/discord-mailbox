@@ -1,3 +1,3 @@
-import { EmbedData } from 'discord.js';
+import type { EmbedData } from "discord.js";
 
 export type EmbedOptions = EmbedData;
