@@ -84,7 +84,7 @@ export class MailboxManager extends EventEmitter implements IMailboxManager {
         const userTickets =
             this.usersTickets.get(ticket.createdBy.id) ??
             new Collection<string, Ticket>();
-        if (userTickets.size >= maxOnGoingTicketsPerUser)
+        if (userTickets.filter(t => t.guildId === guildId).size >= maxOnGoingTicketsPerUser)
             throw new Error(ErrorMessages.tooMuchTicketsOpened);
         userTickets.set(ticket.id, ticket);
         this.usersTickets.set(ticket.createdBy.id, userTickets);
