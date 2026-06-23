@@ -29,10 +29,10 @@ import ErrorMessages from "./ErrorMessages.js";
 import { MailboxManager } from "./MailboxManager.js";
 import { MailboxManagerEvents } from "./MailboxManagerEvents.js";
 import {
+    createTicketContentFromInteraction,
     type ManagerOptions,
     type Ticket,
     type UserTickets,
-    createTicketContentFromInteraction,
 } from "./types/index.js";
 import { isNullOrWhiteSpaces, truncate } from "./utils/StringUtils.js";
 
@@ -520,7 +520,7 @@ export class InteractionBasedMailboxManager extends MailboxManager {
                                   : guild.name,
                               iconURL: isSentToAdmin
                                   ? ticket.lastMessage.author.displayAvatarURL()
-                                  : guild.iconURL() ?? undefined,
+                                  : (guild.iconURL() ?? undefined),
                           })
                           .setDescription(description)
                           .setFooter({ text: header })

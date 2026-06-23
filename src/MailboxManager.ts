@@ -23,7 +23,8 @@ import {
  */
 export class MailboxManager extends EventEmitter implements IMailboxManager {
     readonly #managerOptions: GlobalMailboxOptions;
-    readonly #cronJob: CronJob<null, this>; // eslint-disable-line no-unused-private-class-members
+    // biome-ignore lint/correctness/noUnusedPrivateClassMembers: The cron job is used to check tickets periodically, and is started in the constructor. It is not used directly in the class, but it is necessary for the functionality of the class.
+    readonly #cronJob: CronJob<null, this>;
 
     /**
      * The discord client
@@ -76,7 +77,6 @@ export class MailboxManager extends EventEmitter implements IMailboxManager {
         guildId: Snowflake,
         maxOnGoingTicketsPerUser?: number,
     ): Ticket {
-        // biome-ignore lint: conditional assignment in case of undefined (also value is not constant due to manager's options)
         maxOnGoingTicketsPerUser ??=
             this.#managerOptions.maxOnGoingTicketsPerUser;
         const ticket = new Ticket(content, guildId);
@@ -84,7 +84,10 @@ export class MailboxManager extends EventEmitter implements IMailboxManager {
         const userTickets =
             this.usersTickets.get(ticket.createdBy.id) ??
             new Collection<string, Ticket>();
-        if (userTickets.filter(t => t.guildId === guildId).size >= maxOnGoingTicketsPerUser)
+        if (
+            userTickets.filter((t) => t.guildId === guildId).size >=
+            maxOnGoingTicketsPerUser
+        )
             throw new Error(ErrorMessages.tooMuchTicketsOpened);
         userTickets.set(ticket.id, ticket);
         this.usersTickets.set(ticket.createdBy.id, userTickets);
